@@ -66,9 +66,6 @@ RUN git clone --recursive https://github.com/ZoneMinder/ZoneMinder
 # Change into the ZoneMinder directory
 WORKDIR /ZoneMinder
 
-# Setup the ZoneMinder build environment
-#RUN aclocal && autoheader && automake --force-missing --add-missing && autoconf
-
 # Configure ZoneMinder
 RUN cmake .
 
