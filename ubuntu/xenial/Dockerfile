@@ -39,6 +39,8 @@ RUN apt-get update \
     libpostproc-dev \
     libssl-dev \
     libswscale-dev \
+    libsys-cpu-perl \
+    libsys-meminfo-perl \
     libsys-mmap-perl \
     libtheora-dev \
     libtool \
