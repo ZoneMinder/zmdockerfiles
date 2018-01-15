@@ -108,8 +108,11 @@ CMD if [ ! -z "$TZ" ]; then \
 		mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"; \
 		mysql -u root zm < /usr/local/share/zoneminder/db/zm_create.sql; \
 	fi && \
+        echo  "ServerName localhost" > /etc/apache2/conf-available/servername.conf && \
+        a2enconf -q servername && \
 	/ZoneMinder/utils/docker/setup.sh && \
 	service apache2 restart && \
+	service mysql restart && \
 	/ZoneMinder/utils/docker/start.sh >/var/log/start.log 2>&1
 
 # Run example if you don't have seperate db:
