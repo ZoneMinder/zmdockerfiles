@@ -94,13 +94,13 @@ EXPOSE 80
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
 
 # This is run each time the container is started
-CMD if [ ! -z "$TZ" ]; then \
+CMD if [ -n "$TZ" ]; then \
         echo "date.timezone = $TZ" >> /etc/php/7.0/apache2/php.ini; \
     else \
         echo "date.timezone = UTC" >> /etc/php/7.0/apache2/php.ini; \
     fi && \
     service apache2 restart && \
-    if [ ! -z "$MYSQL_SERVER" && ! -z "$MYSQL_USER" &&  ! -z "$MYSQL_PASSWORD" && ! -z "$MYSQL_DB" ]; then \
+    if [ -n "$MYSQL_SERVER" && -n "$MYSQL_USER" &&  -n "$MYSQL_PASSWORD" && -n "$MYSQL_DB" ]; then \
         sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" /etc/zm.conf && \
         sed -i -e "s/ZM_DB_USER=zmuser/ZM_DB_USER=$MYSQL_USER/g" /etc/zm.conf && \
         sed -i -e "s/ZM_DB_PASS=zm/ZM_DB_PASS=$MYSQL_PASS/g" /etc/zm.conf && \
@@ -108,9 +108,8 @@ CMD if [ ! -z "$TZ" ]; then \
     else \
         usermod -d /var/lib/mysql/ mysql && \
         service mysql restart && \
-        mysql -u root -e "create database zm;" && \
-        mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"; \
         mysql -u root < /usr/local/share/zoneminder/db/zm_create.sql; \
+        mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"; \
     fi && \
     /ZoneMinder/utils/docker/start.sh >/var/log/start.log 2>&1
 
