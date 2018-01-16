@@ -132,7 +132,7 @@ CMD if [ -n "$TZ" ]; then \
 # Alternaitvely, the timezone can be set manually like so:
 #
 # docker run -d -t -p 1080:80 \
-#    -e PHP_TIMEZONE='America/Los_Angeles' \
+#    -e TZ='America/Los_Angeles' \
 #    --name zoneminder \
 #    zoneminder/zoneminder
 
@@ -162,7 +162,7 @@ CMD if [ -n "$TZ" ]; then \
 # Here is an example using the options described above with the internal database:
 #
 # docker run -d -t -p 1080:80 \
-#    -e PHP_TIMEZONE='America/Los_Angeles' \
+#    -e TZ='America/Los_Angeles' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
 #    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
@@ -174,7 +174,7 @@ CMD if [ -n "$TZ" ]; then \
 # Here is an example using the options described above with an external database:
 #
 # docker run -d -t -p 1080:80 \
-#    -e PHP_TIMEZONE='America/Los_Angeles' \
+#    -e TZ='America/Los_Angeles' \
 #    -e ZM_DB_NAME='zmuser' \
 #    -e ZM_DB_PASS='zmpassword' \
 #    -e ZM_DB_NAME='zoneminder_database' \
