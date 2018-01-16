@@ -149,15 +149,15 @@ CMD if [ -n "$TZ" ]; then \
 # ZoneMinder can use an external database by setting the appropriate environment variables.
 #
 # docker run -d -t -p 1080:80 \
-#     -e ZM_DB_NAME='zmuser' \
-#     -e ZM_DB_PASS='zmpassword' \
-#     -e ZM_DB_NAME='zoneminder_database' \
-#     -e ZM_DB_HOST='my_central_db_server' \
-#     -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#     -v /disk/zoneminder/images:/var/lib/zoneminder/images \
-#     -v /disk/zoneminder/logs:/var/log/zm \
-#     --name zoneminder \
-#     zoneminder/zoneminder
+#    -e ZM_DB_NAME='zmuser' \
+#    -e ZM_DB_PASS='zmpassword' \
+#    -e ZM_DB_NAME='zoneminder_database' \
+#    -e ZM_DB_HOST='my_central_db_server' \
+#    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
+#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
+#    -v /disk/zoneminder/logs:/var/log/zm \
+#    --name zoneminder \
+#    zoneminder/zoneminder
 
 # Here is an example using the options described above with the internal database:
 #
@@ -175,13 +175,13 @@ CMD if [ -n "$TZ" ]; then \
 #
 # docker run -d -t -p 1080:80 \
 #    -e PHP_TIMEZONE='America/Los_Angeles' \
-#     -e ZM_DB_NAME='zmuser' \
-#     -e ZM_DB_PASS='zmpassword' \
-#     -e ZM_DB_NAME='zoneminder_database' \
-#     -e ZM_DB_HOST='my_central_db_server' \
-#     -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#     -v /disk/zoneminder/images:/var/lib/zoneminder/images \
-#     -v /disk/zoneminder/logs:/var/log/zm \
+#    -e ZM_DB_NAME='zmuser' \
+#    -e ZM_DB_PASS='zmpassword' \
+#    -e ZM_DB_NAME='zoneminder_database' \
+#    -e ZM_DB_HOST='my_central_db_server' \
+#    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
+#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
+#    -v /disk/zoneminder/logs:/var/log/zm \
 #    --shm-size="512m" \
-#     --name zoneminder \
-#     zoneminder/zoneminder
+#    --name zoneminder \
+#    zoneminder/zoneminder
