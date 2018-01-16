@@ -1,9 +1,8 @@
 # zmdockerfiles
-This repository contains the Docker files used for our build system, and it also contains Docker files for running ZoneMinder.
+This repository contains Docker files used in various ways for the ZoneMinder project.
 
-Contributions are welcome, but please follow these simple guidelines:
+Contributions are welcome, but please follow instructions under each subfolder:
 
-- Only one Dockerfile per distro
-- Keep each Dockerfile sorted by distro
-- Each Dockerfile should be self sufficient. It should grab the ZoneMinder project, and any other other requried files, from github or other online resource, rather than expect files to pre-exist on the filesystem.
-
+- [buildsystem](https://github.com/ZoneMinder/zmdockerfiles/tree/master/buildsystem) - These build zoneminder into packages
+- [development](https://github.com/ZoneMinder/zmdockerfiles/tree/master/development) - These run the latest ZoneMinder code.
+- [release](https://github.com/ZoneMinder/zmdockerfiles/tree/master/release) - These run the latest ZoneMinder release.
