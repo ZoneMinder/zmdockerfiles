@@ -123,12 +123,22 @@ CMD if [ -n "$TZ" ]; then \
 # the size significantly at runtime like so:
 #
 # docker run -d -t -p 1080:80 \
-#    --shm-size="512m"
+#    --shm-size="512m" \
+#    --name zoneminder \
+#    zoneminder/zoneminder
 
-# If you don't have seperate db:
+# ZoneMinder checks the TZ environment variable at runtime to determine the timezone.
+# If this variable is not set, then ZoneMinder will default to UTC.
+# Alternaitvely, the timezone can be set manually like so:
 #
 # docker run -d -t -p 1080:80 \
 #    -e PHP_TIMEZONE='America/Los_Angeles' \
+#    --name zoneminder \
+#    zoneminder/zoneminder
+
+# ZoneMinder can write its data to folders outside the container using volumes.
+#
+# docker run -d -t -p 1080:80 \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
 #    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
@@ -136,10 +146,9 @@ CMD if [ -n "$TZ" ]; then \
 #    --name zoneminder \
 #    zoneminder/zoneminder
 
-# If you do have a seperate db:
+# ZoneMinder can use an external database by setting the appropriate environment variables.
 #
 # docker run -d -t -p 1080:80 \
-#     -e PHP_TIMEZONE='America/Los_Angeles' \
 #     -e ZM_DB_NAME='zmuser' \
 #     -e ZM_DB_PASS='zmpassword' \
 #     -e ZM_DB_NAME='zoneminder_database' \
@@ -147,5 +156,32 @@ CMD if [ -n "$TZ" ]; then \
 #     -v /disk/zoneminder/events:/var/lib/zoneminder/events \
 #     -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #     -v /disk/zoneminder/logs:/var/log/zm \
+#     --name zoneminder \
+#     zoneminder/zoneminder
+
+# Here is an example using the options described above with the internal database:
+#
+# docker run -d -t -p 1080:80 \
+#    -e PHP_TIMEZONE='America/Los_Angeles' \
+#    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
+#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
+#    -v /disk/zoneminder/mysql:/var/lib/mysql \
+#    -v /disk/zoneminder/logs:/var/log/zm \
+#    --shm-size="512m" \
+#    --name zoneminder \
+#    zoneminder/zoneminder
+
+# Here is an example using the options described above with an external database:
+#
+# docker run -d -t -p 1080:80 \
+#    -e PHP_TIMEZONE='America/Los_Angeles' \
+#     -e ZM_DB_NAME='zmuser' \
+#     -e ZM_DB_PASS='zmpassword' \
+#     -e ZM_DB_NAME='zoneminder_database' \
+#     -e ZM_DB_HOST='my_central_db_server' \
+#     -v /disk/zoneminder/events:/var/lib/zoneminder/events \
+#     -v /disk/zoneminder/images:/var/lib/zoneminder/images \
+#     -v /disk/zoneminder/logs:/var/log/zm \
+#    --shm-size="512m" \
 #     --name zoneminder \
 #     zoneminder/zoneminder
