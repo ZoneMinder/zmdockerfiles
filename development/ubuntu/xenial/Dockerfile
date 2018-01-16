@@ -102,7 +102,7 @@ CMD if [ -n "$TZ" ]; then \
         echo "date.timezone = UTC" >> /etc/php/7.0/apache2/php.ini; \
     fi && \
     service apache2 restart && \
-    if [ -n "$MYSQL_SERVER" && -n "$MYSQL_USER" &&  -n "$MYSQL_PASSWORD" && -n "$MYSQL_DB" ]; then \
+    if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then \
         sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" /etc/zm.conf && \
         sed -i -e "s/ZM_DB_USER=zmuser/ZM_DB_USER=$MYSQL_USER/g" /etc/zm.conf && \
         sed -i -e "s/ZM_DB_PASS=zm/ZM_DB_PASS=$MYSQL_PASS/g" /etc/zm.conf && \
