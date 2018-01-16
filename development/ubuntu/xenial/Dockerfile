@@ -79,10 +79,13 @@ RUN make && make install
 # ensure writable folders
 RUN ./zmlinkcontent.sh
 
+# Set our volumes before we attempt to configure apache
+VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
+
 # Configure Apache
 RUN cp misc/apache.conf /etc/apache2/sites-available/000-default.conf
-RUN a2enmod -q cgi && a2enmod -q rewrite
 RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf && a2enconf -q servername
+RUN a2enmod -q cgi && a2enmod -q rewrite
 
 # Configure mysql
 RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
@@ -90,8 +93,6 @@ RUN service mysql restart
 
 # Expose http port
 EXPOSE 80
-
-VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
 
 # This is run each time the container is started
 CMD if [ -n "$TZ" ]; then \
