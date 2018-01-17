@@ -59,6 +59,7 @@ RUN apt-get update \
     mysql-server \
     php \
     php-cli \
+    php-gd \
     php-mysql \
     software-properties-common \
     vlc-data \
