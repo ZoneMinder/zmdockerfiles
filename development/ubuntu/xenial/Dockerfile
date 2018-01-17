@@ -83,6 +83,9 @@ RUN ./zmlinkcontent.sh
 # Set our volumes before we attempt to configure apache
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
 
+# Stop Apache and Mysql before we configure them
+RUN service mysql stop && service apache2 stop
+
 # Configure Apache
 RUN cp misc/apache.conf /etc/apache2/sites-available/000-default.conf
 RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf && a2enconf -q servername
@@ -90,30 +93,12 @@ RUN a2enmod -q cgi && a2enmod -q rewrite
 
 # Configure mysql
 RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN service mysql restart
 
 # Expose http port
 EXPOSE 80
 
 # This is run each time the container is started
-CMD if [ -n "$TZ" ]; then \
-        echo "date.timezone = $TZ" >> /etc/php/7.0/apache2/php.ini; \
-    else \
-        echo "date.timezone = UTC" >> /etc/php/7.0/apache2/php.ini; \
-    fi && \
-    service apache2 restart && \
-    if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then \
-        sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" /etc/zm.conf && \
-        sed -i -e "s/ZM_DB_USER=zmuser/ZM_DB_USER=$MYSQL_USER/g" /etc/zm.conf && \
-        sed -i -e "s/ZM_DB_PASS=zm/ZM_DB_PASS=$MYSQL_PASS/g" /etc/zm.conf && \
-        sed -i -e "s/ZM_DB_HOST=localhost/ZM_DB_HOST=$MYSQL_SERVER/g" /etc/zm.conf; \
-    else \
-        usermod -d /var/lib/mysql/ mysql && \
-        service mysql restart && \
-        mysql -u root < /usr/local/share/zoneminder/db/zm_create.sql; \
-        mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"; \
-    fi && \
-    /ZoneMinder/utils/docker/start.sh >/var/log/start.log 2>&1
+ENTRYPOINT ["/ZoneMinder/utils/docker/entrypoint.sh"]
 
 ################
 # RUN EXAMPLES #
