@@ -60,9 +60,14 @@ RUN apt-get update \
     php \
     php-cli \
     php-mysql \
+    software-properties-common \
     vlc-data \
     yasm \
     zip \
+    && add-apt-repository -y ppa:iconnor/zoneminder \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    php-apcu-bc \
     && rm -rf /var/lib/apt/lists/*
 
 # Get the latest master branch and submodule(s)
