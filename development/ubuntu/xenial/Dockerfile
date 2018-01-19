@@ -104,7 +104,7 @@ RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 EXPOSE 80
 
 # Get the entrypoint script and make sure it is executable
-ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/docker/entrypoint.sh /usr/local/bin/
+ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # This is run each time the container is started
