@@ -1,6 +1,6 @@
 # zmdockerfiles
 This repository contains Docker files used for running the latest ZoneMinder release.
-If you are looking to run the latest code from the master branch, see the [development](https://github.com/ZoneMinder/zmdockerfiles/tree/master/development) instead.
+If you are looking to run the latest code from the master branch, see the [development](https://github.com/ZoneMinder/zmdockerfiles/tree/master/development) folder instead.
 
 Contributions are welcome, but please follow these simple guidelines:
 
