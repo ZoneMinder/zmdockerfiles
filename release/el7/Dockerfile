@@ -25,6 +25,9 @@ EXPOSE 80 443
 # Disable SELinux. Boo, Hiss....
 RUN sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config && setenforce 0
 
+# Initialize the database server
+RUN mysql_install_db --user=mysql --ldata=/var/lib/mysql/
+
 # This is run each time the container is started
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
