@@ -14,7 +14,7 @@
 initialize () {
 
     # Check to see if this script has access to all the commands it needs
-    for CMD in cat grep install my_print_defaults mysql mysqladmin mysqld_safe sed sleep su tail usermod; do
+    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe sed sleep su tail usermod; do
       type $CMD &> /dev/null
 
       if [ $? -ne 0 ]; then
@@ -123,12 +123,24 @@ mysql_timer () {
 }
 
 # mysql service management
-start_mysql () {    
+start_mysql () {
+    # determine if we are running mariadb or mysql then guess pid location
+    if [ $(mysql --version |grep -ci mariadb) -ge "1" ]; then
+        default_pidfile="/var/run/mariadb/mariadb.pid"
+    else
+        default_pidfile="/var/run/mysqld/mysqld.pid"
+    fi
+
+    # verify our guessed pid file location is right
+    get_mysql_option mysqld_safe pid-file $default_pidfile
+    mypidfile=$result
+    mypidfolder=${mypidfile%/*}
+
     # Start mysql only if it is not already running
     if [ "$(mysql_running)" -eq "0" ]; then
         echo -n " * Starting MySQL database server service"
-        test -e /var/run/mysqld || install -m 755 -o mysql -g root -d /var/run/mysqld
-        su - mysql -s /bin/sh -c "mysqld_safe --timezone=$TZ" > /dev/null 2>&1 &
+        test -e $mypidfolder || install -m 755 -o mysql -g root -d $mypidfolder
+        mysqld_safe --user=mysql --timezone="$TZ" > /dev/null 2>&1 &
         RETVAL=$?
         if [ "$RETVAL" = "0" ]; then
             echo "   ...done."
@@ -140,16 +152,6 @@ start_mysql () {
         echo " * MySQL database server mysqld already running."
     fi
 
-    # determine if we are running mariadb or mysql then guess pid location
-    if [ $(mysql --version |grep -ci mariadb) -ge "1" ]; then
-        default_pidfile="/var/run/mariadb/mariadb.pid"
-    else
-        default_pidfile="/var/run/mysqld/mysqld.pid"
-    fi
-
-    # verify our guessed pid file location is right
-    get_mysql_option mysqld_safe pid-file $default_pidfile > /dev/null 2>&1
-    mypidfile=$result
     mysqlpid=`cat "$mypidfile" 2>/dev/null`    
 }
 
@@ -200,6 +202,7 @@ if [ -z "$TZ" ]; then
     $TZ = UTC
 fi
 echo "date.timezone = $TZ" >> $PHPINI
+ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
 
 # Configure then start Mysql
 if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then
