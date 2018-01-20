@@ -149,7 +149,7 @@ start_mysql () {
             echo "   ...failed!"
         fi
     else
-        echo " * MySQL database server mysqld already running."
+        echo " * MySQL database server already running."
     fi
 
     mysqlpid=`cat "$mypidfile" 2>/dev/null`    
