@@ -202,7 +202,12 @@ if [ -z "$TZ" ]; then
     $TZ = UTC
 fi
 echo "date.timezone = $TZ" >> $PHPINI
-ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+if [ -L /etc/localtime ]; then
+    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+fi
+if [ -f /etc/timezone ]; then
+    echo "$TZ" > /etc/timezone
+fi
 
 # Configure then start Mysql
 if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then
