@@ -61,6 +61,7 @@ RUN apt-get update \
     php-cli \
     php-gd \
     php-mysql \
+    ssmtp \
     software-properties-common \
     vlc-data \
     yasm \
@@ -180,3 +181,22 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    --shm-size="512m" \
 #    --name zoneminder \
 #    zoneminder/zoneminder
+
+#######################
+# Email Notifications #
+#######################
+#
+# Zoneminder can notify you via email but for this SSMTP needs to be configured.
+#
+# 1. Copy the ssmtp.conf from your container to your local directory.
+#    $ docker cp zoneminder:/etc/ssmtp/ssmtp.conf .
+# 2. Edit ssmtp.conf to match your SMTP server and email addresses
+# 3. Copy the modified ssmtpt.conf back into the container.
+#    $ docker cp ssmtp.conf zoneminder:/etc/ssmtp/ssmtp.conf
+# 4. In the ZM Console Options, set
+#    - Email->NEW_MAIL_MODULES to enabled
+#    - Email->SSMTP_MAIL to enabled
+#    - Email->SSMTP_PATH to /usr/sbin/ssmtp
+# 5. Create an Email sending event filter as described in the docs 
+#    http://zoneminder.readthedocs.io/en/stable/userguide/filterevents.html
+
