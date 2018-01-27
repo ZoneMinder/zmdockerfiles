@@ -127,6 +127,8 @@ start_mysql () {
     if [ ! -d /var/lib/mysql/mysql ]; then
         echo -n " * Initializing MYSQL database for the first time"
         mysqld --initialize-insecure
+    else
+        rm /var/run/mysqld/mysqld.sock.lock
     fi
     # determine if we are running mariadb or mysql then guess pid location
     if [ $(mysql --version |grep -ci mariadb) -ge "1" ]; then
