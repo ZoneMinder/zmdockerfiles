@@ -124,6 +124,10 @@ mysql_timer () {
 
 # mysql service management
 start_mysql () {
+    if [ ! -d /var/lib/mysql/mysql ]; then
+        echo -n " * Initializing MYSQL database for the first time"
+        mysqld --initialize-insecure
+    fi
     # determine if we are running mariadb or mysql then guess pid location
     if [ $(mysql --version |grep -ci mariadb) -ge "1" ]; then
         default_pidfile="/var/run/mariadb/mariadb.pid"
@@ -209,6 +213,7 @@ if [ -f /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
+chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
 if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then
     sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" $ZMCONF
