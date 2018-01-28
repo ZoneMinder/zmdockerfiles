@@ -204,6 +204,7 @@ cleanup () {
     kill $mysqlpid > /dev/null 2>&1
     $HTTPBIN -k stop > /dev/null 2>&1
     sleep 5
+    exit 0
 }
 
 ################
@@ -259,6 +260,6 @@ start_zoneminder
 while :
 do
     # perhaps output some stuff here or check apache & mysql are still running
-    sleep 3600
+    sleep 2
 done
 
