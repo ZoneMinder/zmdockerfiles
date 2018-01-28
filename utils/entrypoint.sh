@@ -146,10 +146,10 @@ start_mysql () {
     mysocklockfile=${mypidfile%/mysqld.sock.lock}
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
-        echo -n " * First run of MYSQL, initializing DB."
+        echo " * First run of MYSQL, initializing DB."
         mysqld --initialize-insecure
     elif [ -e ${mypidsocklock} ]; then
-        echo -n " * Removing stale lock file"
+        echo " * Removing stale lock file"
         rm -f ${mypidsocklock}
     fi
     # Start mysql only if it is not already running
