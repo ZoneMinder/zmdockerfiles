@@ -124,12 +124,6 @@ mysql_timer () {
 
 # mysql service management
 start_mysql () {
-    if [ ! -d /var/lib/mysql/mysql ]; then
-        echo -n " * Initializing MYSQL database for the first time"
-        mysqld --initialize-insecure
-    else
-        rm /var/run/mysqld/mysqld.sock.lock
-    fi
     # determine if we are running mariadb or mysql then guess pid location
     if [ $(mysql --version |grep -ci mariadb) -ge "1" ]; then
         default_pidfile="/var/run/mariadb/mariadb.pid"
@@ -142,6 +136,12 @@ start_mysql () {
     mypidfile=$result
     mypidfolder=${mypidfile%/*}
 
+    if [ ! -d /var/lib/mysql/mysql ]; then
+        echo -n " * Initializing MYSQL database for the first time"
+        mysqld --initialize-insecure
+    else
+        rm ${mypidfolder}/mysqld.sock.lock
+    fi
     # Start mysql only if it is not already running
     if [ "$(mysql_running)" -eq "0" ]; then
         echo -n " * Starting MySQL database server service"
