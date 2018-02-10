@@ -14,7 +14,7 @@
 initialize () {
 
     # Check to see if this script has access to all the commands it needs
-    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe sed sleep su tail usermod; do
+    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysqlshow sed sleep su tail usermod; do
       type $CMD &> /dev/null
 
       if [ $? -ne 0 ]; then
@@ -130,6 +130,16 @@ mysql_datadir_exists() {
     fi
 }
 
+zm_db_exists() {
+    mysqlshow zm > /dev/null 2>&1   
+    RETVAL=$?
+    if [ "$RETVAL" = "0" ]; then
+        echo "1" # ZoneMinder database exists
+    else
+        echo "0" # ZoneMinder database does not exist
+    fi
+}
+
 # mysql service management
 start_mysql () {
     # determine if we are running mariadb or mysql then guess pid location
@@ -236,13 +246,12 @@ if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] &&
     start_mysql
 else
     usermod -d /var/lib/mysql/ mysql
-    datadirexists=$(mysql_datadir_exists)
     start_mysql
-    if [ ${datadirexists} -eq "0" ]; then
+    if [ "$(zm_db_exists)" -eq "0" ]; then
         echo " * First run of mysql in the container, creating zoneminder tables."
         mysql -u root < $ZMCREATE
     else
-        echo " * Not the first run, skipping table creation."
+        echo " * ZoneMinder dB already exists, skipping table creation."
     fi
     mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"
 fi
