@@ -199,7 +199,7 @@ initialize
 
 # Set the timezone before we start any services
 if [ -z "$TZ" ]; then
-    $TZ = UTC
+    TZ="UTC"
 fi
 echo "date.timezone = $TZ" >> $PHPINI
 if [ -L /etc/localtime ]; then
