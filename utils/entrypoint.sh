@@ -122,6 +122,14 @@ mysql_timer () {
     fi
 }
 
+mysql_datadir_exists() {
+    if [ -d /var/lib/mysql/mysql ]; then
+        echo "1" # datadir exists
+    else
+        echo "0" # datadir does not exist
+    fi
+}
+
 # mysql service management
 start_mysql () {
     # determine if we are running mariadb or mysql then guess pid location
@@ -135,7 +143,15 @@ start_mysql () {
     get_mysql_option mysqld_safe pid-file $default_pidfile
     mypidfile=$result
     mypidfolder=${mypidfile%/*}
+    mysocklockfile=${mypidfile%/mysqld.sock.lock}
 
+    if [ "$(mysql_datadir_exists)" -eq "0" ]; then
+        echo " * First run of MYSQL, initializing DB."
+        mysqld --initialize-insecure
+    elif [ -e ${mypidsocklock} ]; then
+        echo " * Removing stale lock file"
+        rm -f ${mypidsocklock}
+    fi
     # Start mysql only if it is not already running
     if [ "$(mysql_running)" -eq "0" ]; then
         echo -n " * Starting MySQL database server service"
@@ -188,6 +204,7 @@ cleanup () {
     kill $mysqlpid > /dev/null 2>&1
     $HTTPBIN -k stop > /dev/null 2>&1
     sleep 5
+    exit 0
 }
 
 ################
@@ -209,6 +226,7 @@ if [ -f /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
+chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
 if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then
     sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" $ZMCONF
@@ -218,8 +236,14 @@ if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] &&
     start_mysql
 else
     usermod -d /var/lib/mysql/ mysql
+    datadirexists=$(mysql_datadir_exists)
     start_mysql
-    mysql -u root < $ZMCREATE
+    if [ ${datadirexists} -eq "0" ]; then
+        echo " * First run of mysql in the container, creating zoneminder tables."
+        mysql -u root < $ZMCREATE
+    else
+        echo " * Not the first run, skipping table creation."
+    fi
     mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"
 fi
 
@@ -236,6 +260,6 @@ start_zoneminder
 while :
 do
     # perhaps output some stuff here or check apache & mysql are still running
-    sleep 3600
+    sleep 2
 done
 
