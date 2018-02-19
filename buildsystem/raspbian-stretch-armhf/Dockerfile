@@ -1,6 +1,9 @@
 FROM knnniggett/leosac:2017-11-29-raspbian-stretch-lite
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
+# The existing pi user account causes issues with packpack so remove it
+RUN userdel -fr pi
+
 # Fix missing locales
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
 
