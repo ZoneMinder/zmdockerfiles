@@ -3,6 +3,7 @@ MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
 # The existing pi user account causes issues with packpack so remove it
 RUN userdel -fr pi
+RUN rm -f /etc/sudoers.d/010_pi-nopasswd
 
 # Fix missing locales
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
