@@ -15,17 +15,22 @@ RUN yum -y install \
     tar \
     wget \
     curl \
-    pygpgme
+    pygpgme \
+    yum-utils
 RUN yum -y install epel-release
 RUN curl -s https://packagecloud.io/install/repositories/packpack/backports/script.rpm.sh | bash
 RUN yum makecache && yum clean all
 
 # Install base toolset
 RUN yum -y groupinstall 'Development Tools'
+RUN yum -y install \
+    epel-rpm-macros \
+    cmake \
+    sudo \
+    vim-minimal
 
 # Enable cache system-wide
 ENV PATH /usr/lib/ccache:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
 # Enable sudo without tty
 RUN sed -i.bak -n -e '/^Defaults.*requiretty/ { s/^/# /;};/^%wheel.*ALL$/ { s/^/# / ;} ;/^#.*wheel.*NOPASSWD/ { s/^#[ ]*//;};p' /etc/sudoers
-
