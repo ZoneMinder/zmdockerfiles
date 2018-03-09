@@ -145,7 +145,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # ZoneMinder can use an external database by setting the appropriate environment variables.
 #
 # docker run -d -t -p 1080:80 \
-#    -e ZM_DB_NAME='zmuser' \
+#    -e ZM_DB_USER='zmuser' \
 #    -e ZM_DB_PASS='zmpassword' \
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
@@ -171,7 +171,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #
 # docker run -d -t -p 1080:80 \
 #    -e TZ='America/Los_Angeles' \
-#    -e ZM_DB_NAME='zmuser' \
+#    -e ZM_DB_user='zmuser' \
 #    -e ZM_DB_PASS='zmpassword' \
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
