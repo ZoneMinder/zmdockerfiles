@@ -11,6 +11,9 @@
 ###############
 
 # Find ciritical files and perform sanity checks
+
+set -e
+
 initialize () {
 
     # Check to see if this script has access to all the commands it needs
