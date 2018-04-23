@@ -53,6 +53,7 @@ initialize () {
     for FILE in "/usr/share/zoneminder/db/zm_create.sql" "/usr/local/share/zoneminder/db/zm_create.sql"; do
         if [ -f $FILE ]; then
             ZMCREATE=$FILE
+            sed -i 's|/db/triggers.sql|triggers.sql|' "$ZMCREATE"
             break
         fi
     done
@@ -249,7 +250,10 @@ else
     start_mysql
     if [ "$(zm_db_exists)" -eq "0" ]; then
         echo " * First run of mysql in the container, creating zoneminder tables."
-        mysql -u root < $ZMCREATE
+        pushd . >/dev/null
+        cd "$(dirname "$ZMCREATE")"
+        echo "source $(basename "$ZMCREATE")" | mysql -u root
+        popd >/dev/null
     else
         echo " * ZoneMinder dB already exists, skipping table creation."
     fi
