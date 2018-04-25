@@ -9,7 +9,8 @@ RUN yum -y install \
     wget \
     curl \
     pygpgme \
-    yum-utils
+    yum-utils \
+    qemu-user-static
 # RUN curl -s https://packagecloud.io/install/repositories/packpack/backports/script.rpm.sh | bash
 
 # Install base toolset
