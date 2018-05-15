@@ -20,6 +20,8 @@ RUN dnf -y group install 'RPM Development Tools'
 RUN dnf -y install fedora-packager
 RUN dnf -y install sudo git ccache cmake
 RUN dnf -y update vim-minimal
+# This seems to be necessary. The previous steps aren't installing latest packages
+RUN dnf -y update
 
 # Enable cache system-wide
 ENV PATH /usr/lib/ccache:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
