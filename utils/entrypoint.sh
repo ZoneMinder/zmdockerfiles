@@ -238,11 +238,11 @@ fi
 
 chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
-if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then
-    sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" $ZMCONF
-    sed -i -e "s/ZM_DB_USER=zmuser/ZM_DB_USER=$MYSQL_USER/g" $ZMCONF
-    sed -i -e "s/ZM_DB_PASS=zm/ZM_DB_PASS=$MYSQL_PASS/g" $ZMCONF
-    sed -i -e "s/ZM_DB_HOST=localhost/ZM_DB_HOST=$MYSQL_SERVER/g" $ZMCONF
+if [ -n "$ZM_DB_HOST" ] && [ -n "$ZM_DB_USER" ] && [ -n "$ZM_DB_PASS" ] && [ -n "$ZM_DB_NAME" ]; then
+    sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
+    sed -i -e "s/ZM_DB_USER=.*$/ZM_DB_USER=$ZM_DB_USER/g" $ZMCONF
+    sed -i -e "s/ZM_DB_PASS=.*$/ZM_DB_PASS=$ZM_DB_PASS/g" $ZMCONF
+    sed -i -e "s/ZM_DB_HOST=.*$/ZM_DB_HOST=$ZM_DB_HOST/g" $ZMCONF
     start_mysql
 else
     usermod -d /var/lib/mysql/ mysql
