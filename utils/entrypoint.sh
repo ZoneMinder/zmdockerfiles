@@ -93,7 +93,7 @@ initialize () {
 
     # counter = 0 means a local database
     # counter = 4 means a remote database
-    # counter != 0 or 4 means the credentials we not specified correctly and we should fail
+    # counter != 0 or 4 means the credentials were not specified correctly and we should fail
     remoteDB=0
     if [ $counter -eq "4" ]; then
         echo " * Remote database credentials detected. Continuing..."
