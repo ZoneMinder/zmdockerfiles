@@ -14,7 +14,7 @@
 initialize () {
 
     # Check to see if this script has access to all the commands it needs
-    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysqlshow sed sleep su tail usermod; do
+    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysql_install_db mysqlshow sed sleep su tail usermod; do
       type $CMD &> /dev/null
 
       if [ $? -ne 0 ]; then
@@ -184,7 +184,7 @@ start_mysql () {
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
         echo " * First run of MYSQL, initializing DB."
-        mysqld --initialize-insecure
+        mysql_install_db --user=mysql --ldata=/var/lib/mysql/ > /dev/null 2>&1
     elif [ -e ${mypidsocklock} ]; then
         echo " * Removing stale lock file"
         rm -f ${mypidsocklock}
