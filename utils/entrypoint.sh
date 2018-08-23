@@ -184,7 +184,7 @@ start_mysql () {
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
         echo " * First run of MYSQL, initializing DB."
-        mysql_install_db --user=mysql --ldata=/var/lib/mysql/ > /dev/null 2>&1
+        mysql_install_db --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
     elif [ -e ${mypidsocklock} ]; then
         echo " * Removing stale lock file"
         rm -f ${mypidsocklock}
