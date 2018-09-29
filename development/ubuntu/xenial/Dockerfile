@@ -96,7 +96,7 @@ RUN service mysql stop && service apache2 stop
 # Configure Apache
 RUN cp misc/apache.conf /etc/apache2/sites-available/000-default.conf
 RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf && a2enconf -q servername
-RUN a2enmod -q cgi && a2enmod -q rewrite
+RUN a2enmod -q rewrite && a2enmod -q cgi
 
 # Configure mysql
 RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
