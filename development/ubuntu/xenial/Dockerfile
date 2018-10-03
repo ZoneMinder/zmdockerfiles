@@ -54,6 +54,20 @@ RUN apt-get update \
     libvorbis-dev \
     libvpx-dev \
     libwww-perl \
+    libjson-any-perl \
+    libjson-maybexs-perl \
+    libnumber-bytes-human-perl \
+    libsoap-wsdl-perl \
+    libio-socket-multicast-perl \
+    libphp-serialization-perl \
+    libimage-info-perl \
+    liburi-encode-perl \
+    libdata-dump-perl \
+    libclass-std-fast-perl \
+    libdigest-sha-perl \
+    libdata-uuid-perl \
+    libfile-slurp-perl \
+    perl-modules \
     libx264-dev \
     mysql-client \
     mysql-server \
@@ -99,7 +113,8 @@ RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf &&
 RUN a2enmod -q rewrite && a2enmod -q cgi
 
 # Configure mysql
-RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+# No longer needed for zm >= 1.32.0
+#RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 
 # Expose http port
 EXPOSE 80
