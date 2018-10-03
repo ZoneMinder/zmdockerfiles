@@ -14,7 +14,7 @@
 initialize () {
 
     # Check to see if this script has access to all the commands it needs
-    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysql_install_db mysqlshow sed sleep su tail usermod; do
+    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysqlshow sed sleep su tail usermod head file; do
       type $CMD &> /dev/null
 
       if [ $? -ne 0 ]; then
@@ -23,6 +23,14 @@ initialize () {
         echo
         exit 1
       fi
+    done
+
+    # Look in common places for the mysqld/MariaDB executable
+    for FILE in "/usr/sbin/mysqld" "/usr/libexec/mysqld" "/usr/local/sbin/mysqld" "/usr/local/libexec/mysqld"; do
+        if [ -f $FILE ]; then
+            MYSQLD=$FILE
+            break
+        fi
     done
 
     # Look in common places for the apache executable commonly called httpd or apache2
@@ -66,7 +74,7 @@ initialize () {
         fi
     done
 
-    for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN; do 
+    for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do 
         if [ -z $FILE ]; then
             echo
             echo "FATAL: This script was unable to determine one or more critical files. Cannot continue."
@@ -79,6 +87,7 @@ initialize () {
             echo "Path to zm_create.sql: ${ZMCREATE}"
             echo "Path to php.ini: ${PHPINI}"
             echo "Path to Apache executable: ${HTTPBIN}"
+            echo "Path to Mysql executable: ${MYSQLD}"
             echo
             exit 98
         fi
@@ -167,6 +176,25 @@ zm_db_exists() {
     fi
 }
 
+# The secret sauce to determine wether to use mysql_install_db
+# or mysqld --initialize seems to be wether mysql_install_db is a shell
+# script or a binary executable
+use_mysql_install_db () {
+    MYSQL_INSTALL_DB=$(type mysql_install_db)
+    local result="$?"
+
+    if [ "$result" -eq "0" ] && [ -n $MYSQL_INSTALL_DB  ]; then
+        local contents=$(file -b $MYSQL_INSTALL_DB)
+        if [[ "$contents" =~ "*ASCII text executable*" ]]; then
+            echo "1" # mysql_install_db is a shell script
+        else
+            echo "0" # mysql_install_db is a binary
+        fi
+    else
+        echo "0" # mysql_install_db does not exist
+    fi
+}
+
 # mysql service management
 start_mysql () {
     # determine if we are running mariadb or mysql then guess pid location
@@ -184,7 +212,11 @@ start_mysql () {
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
         echo " * First run of MYSQL, initializing DB."
-        mysql_install_db --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
+        if [ "$(use_mysql_install_db)" -eq "0" ]; then
+            ${MYSQL_INSTALL_DB} --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
+        else
+            ${MYSQLD} --initialize-insecure --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
+        fi
     elif [ -e ${mypidsocklock} ]; then
         echo " * Removing stale lock file"
         rm -f ${mypidsocklock}
@@ -208,7 +240,7 @@ start_mysql () {
     mysqlpid=`cat "$mypidfile" 2>/dev/null`    
 }
 
-# Check the status of the remote mysql server using supplied credentials
+# Check the status of the remote mysql server using /etc/php/7.2/apache2/php.inisupplied credentials
 chk_remote_mysql () {
     if [ $remoteDB -eq "1" ]; then
         echo -n " * Looking for remote database server"
