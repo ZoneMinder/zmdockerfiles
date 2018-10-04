@@ -74,7 +74,7 @@ initialize () {
         fi
     done
 
-    for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do 
+    for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do
         if [ -z $FILE ]; then
             echo
             echo "FATAL: This script was unable to determine one or more critical files. Cannot continue."
@@ -183,8 +183,8 @@ use_mysql_install_db () {
     MYSQL_INSTALL_DB=$(type mysql_install_db)
     local result="$?"
 
-    if [ "$result" -eq "0" ] && [ -n $MYSQL_INSTALL_DB  ]; then
-        local contents=$(file -b $MYSQL_INSTALL_DB)
+    if [ "$result" -eq "0" ] && [ -n "$MYSQL_INSTALL_DB"  ]; then
+        local contents=$(file -b "$MYSQL_INSTALL_DB")
         if [[ "$contents" =~ "*ASCII text executable*" ]]; then
             echo "1" # mysql_install_db is a shell script
         else
@@ -237,10 +237,10 @@ start_mysql () {
         echo " * MySQL database server already running."
     fi
 
-    mysqlpid=`cat "$mypidfile" 2>/dev/null`    
+    mysqlpid=`cat "$mypidfile" 2>/dev/null`
 }
 
-# Check the status of the remote mysql server using /etc/php/7.2/apache2/php.inisupplied credentials
+# Check the status of the remote mysql server using supplied credentials
 chk_remote_mysql () {
     if [ $remoteDB -eq "1" ]; then
         echo -n " * Looking for remote database server"
