@@ -180,7 +180,7 @@ zm_db_exists() {
 # or mysqld --initialize seems to be wether mysql_install_db is a shell
 # script or a binary executable
 use_mysql_install_db () {
-    MYSQL_INSTALL_DB=$(type mysql_install_db)
+    MYSQL_INSTALL_DB=$(type -p mysql_install_db)
     local result="$?"
 
     if [ "$result" -eq "0" ] && [ -n "$MYSQL_INSTALL_DB"  ]; then
