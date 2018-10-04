@@ -212,7 +212,7 @@ start_mysql () {
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
         echo " * First run of MYSQL, initializing DB."
-        if [ "$(use_mysql_install_db)" -eq "0" ]; then
+        if [ "$(use_mysql_install_db)" -eq "1" ]; then
             ${MYSQL_INSTALL_DB} --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
         else
             ${MYSQLD} --initialize-insecure --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
