@@ -65,7 +65,9 @@ initialize () {
         fi
     done
 
-    # Look in common places for the php.ini relevant to zoneminder - php.ini
+    # Look in common places for the php.ini relevant to zonemindermypidfile="/var/run/mariadb/mariadb.pid"
+mypidfolder=${mypidfile%/*}
+mysocklockfile=${mypidfolder}/mysqld.sock.lock - php.ini
     # Search order matters here because debian distros commonly have multiple php.ini's
     for FILE in "/etc/php/7.0/apache2/php.ini" "/etc/php5/apache2/php.ini" "/etc/php.ini" "/usr/local/etc/php.ini"; do
         if [ -f $FILE ]; then
@@ -208,7 +210,7 @@ start_mysql () {
     get_mysql_option mysqld_safe pid-file $default_pidfile
     mypidfile=$result
     mypidfolder=${mypidfile%/*}
-    mysocklockfile=${mypidfile%/mysqld.sock.lock}
+    mysocklockfile=${mypidfolder}/mysqld.sock.lock
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
         echo " * First run of MYSQL, initializing DB."
@@ -217,9 +219,9 @@ start_mysql () {
         else
             ${MYSQLD} --initialize-insecure --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
         fi
-    elif [ -e ${mypidsocklock} ]; then
+    elif [ -e ${mysocklockfile} ]; then
         echo " * Removing stale lock file"
-        rm -f ${mypidsocklock}
+        rm -f ${mysocklockfile}
     fi
     # Start mysql only if it is not already running
     if [ "$(mysql_running)" -eq "0" ]; then
