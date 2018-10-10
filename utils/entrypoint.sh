@@ -65,9 +65,7 @@ initialize () {
         fi
     done
 
-    # Look in common places for the php.ini relevant to zonemindermypidfile="/var/run/mariadb/mariadb.pid"
-mypidfolder=${mypidfile%/*}
-mysocklockfile=${mypidfolder}/mysqld.sock.lock - php.ini
+    # Look in common places for the php.ini relevant to zoneminder
     # Search order matters here because debian distros commonly have multiple php.ini's
     for FILE in "/etc/php/7.0/apache2/php.ini" "/etc/php5/apache2/php.ini" "/etc/php.ini" "/usr/local/etc/php.ini"; do
         if [ -f $FILE ]; then
