@@ -104,10 +104,10 @@ initialize () {
     # counter = 4 means a remote database
     # counter != 0 or 4 means the credentials were not specified correctly and we should fail
     remoteDB=0
-    if [ $counter -eq "4" ]; then
+    if [ "$counter" -eq "4" ]; then
         echo " * Remote database credentials detected. Continuing..."
         remoteDB=1
-    elif [ $counter -ne "0" ]; then
+    elif [ "$counter" -ne "0" ]; then
         echo " * Fatal: Remote database credentials not set correctly."
         exit 97
     fi
@@ -127,7 +127,7 @@ get_mysql_option (){
 
 # Return status of mysql service
 mysql_running () {
-    if [ $remoteDB -eq "1" ]; then
+    if [ "$remoteDB" -eq "1" ]; then
         mysqladmin ping -u${ZM_DB_USER} -p${ZM_DB_PASS} -h${ZM_DB_HOST} > /dev/null 2>&1
     else
         mysqladmin ping > /dev/null 2>&1
@@ -163,7 +163,7 @@ mysql_datadir_exists() {
 }
 
 zm_db_exists() {
-    if [ $remoteDB -eq "1" ]; then
+    if [ "$remoteDB" -eq "1" ]; then
         mysqlshow -u${ZM_DB_USER} -p${ZM_DB_PASS} -h${ZM_DB_HOST} ${ZM_DB_NAME} > /dev/null 2>&1
     else
         mysqlshow zm > /dev/null 2>&1
@@ -225,7 +225,7 @@ start_mysql () {
     if [ "$(mysql_running)" -eq "0" ]; then
         echo -n " * Starting MySQL database server service"
         test -e $mypidfolder || install -m 755 -o mysql -g root -d $mypidfolder
-        mysqld_safe --user=mysql --timezone="$TZ" > /dev/null 2>&1 &
+        mysqld_safe --user=mysql --timezone="$TZ" > /dev/null 2>&1
         RETVAL=$?
         if [ "$RETVAL" = "0" ]; then
             echo "   ...done."
@@ -242,7 +242,7 @@ start_mysql () {
 
 # Check the status of the remote mysql server using supplied credentials
 chk_remote_mysql () {
-    if [ $remoteDB -eq "1" ]; then
+    if [ "$remoteDB" -eq "1" ]; then
         echo -n " * Looking for remote database server"
         if [ "$(mysql_running)" -eq "1" ]; then
             echo "   ...found."
@@ -328,7 +328,7 @@ fi
 
 chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
-if [ $remoteDB -eq "1" ]; then
+if [ "$remoteDB" -eq "1" ]; then
     sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
     sed -i -e "s/ZM_DB_USER=.*$/ZM_DB_USER=$ZM_DB_USER/g" $ZMCONF
     sed -i -e "s/ZM_DB_PASS=.*$/ZM_DB_PASS=$ZM_DB_PASS/g" $ZMCONF
