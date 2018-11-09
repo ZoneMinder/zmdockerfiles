@@ -8,7 +8,7 @@ RUN yum -y install epel-release
 RUN yum -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
 
 # Install the latest *release* of zoneminder
-RUN yum -y install zoneminder mariadb-server mod_ssl zip
+RUN yum -y install zoneminder mariadb-server mod_ssl zip file
 
 # Initialize the database server
 RUN mysql_install_db --user=mysql --ldata=/var/lib/mysql/
