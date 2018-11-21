@@ -180,7 +180,6 @@ zm_db_exists() {
 # or mysqld --initialize seems to be wether mysql_install_db is a shell
 # script or a binary executable
 use_mysql_install_db () {
-    MYSQL_INSTALL_DB=$(type -p mysql_install_db)
     local result="$?"
 
     if [ "$result" -eq "0" ] && [ -n "$MYSQL_INSTALL_DB"  ]; then
@@ -212,6 +211,7 @@ start_mysql () {
 
     if [ "$(mysql_datadir_exists)" -eq "0" ]; then
         echo " * First run of MYSQL, initializing DB."
+        MYSQL_INSTALL_DB=$(type -p mysql_install_db)
         if [ "$(use_mysql_install_db)" -eq "1" ]; then
             ${MYSQL_INSTALL_DB} --user=mysql --datadir=/var/lib/mysql/ > /dev/null 2>&1
         else
@@ -225,7 +225,7 @@ start_mysql () {
     if [ "$(mysql_running)" -eq "0" ]; then
         echo -n " * Starting MySQL database server service"
         test -e $mypidfolder || install -m 755 -o mysql -g root -d $mypidfolder
-        mysqld_safe --user=mysql --timezone="$TZ" > /dev/null 2>&1
+        mysqld_safe --user=mysql --timezone="$TZ" > /dev/null 2>&1 &
         RETVAL=$?
         if [ "$RETVAL" = "0" ]; then
             echo "   ...done."
