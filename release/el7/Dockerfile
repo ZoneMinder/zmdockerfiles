@@ -14,6 +14,7 @@ RUN yum -y install zoneminder mariadb-server mod_ssl zip file
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
 
 # Configure Apache
+RUN ln -sf /etc/zm/www/zoneminder.conf /etc/httpd/conf.d/
 RUN echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf
 RUN echo -e "# Redirect the webroot to /zm\nRedirectMatch permanent ^/$ /zm" > /etc/httpd/conf.d/redirect.conf
 
