@@ -10,9 +10,6 @@ RUN yum -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpm
 # Install the latest *release* of zoneminder
 RUN yum -y install zoneminder mariadb-server mod_ssl zip file
 
-# Initialize the database server
-RUN mysql_install_db --user=mysql --ldata=/var/lib/mysql/
-
 # Set our volumes before we attempt to configure apache
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
 

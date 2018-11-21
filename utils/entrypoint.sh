@@ -185,7 +185,7 @@ use_mysql_install_db () {
 
     if [ "$result" -eq "0" ] && [ -n "$MYSQL_INSTALL_DB"  ]; then
         local contents=$(file -b "$MYSQL_INSTALL_DB")
-        if [[ "$contents" =~ "*ASCII text executable*" ]]; then
+        if [[ "$contents" =~ .*ASCII.text.executable.* ]]; then
             echo "1" # mysql_install_db is a shell script
         else
             echo "0" # mysql_install_db is a binary
