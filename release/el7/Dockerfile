@@ -12,6 +12,9 @@ RUN yum -y install zoneminder mariadb-server mod_ssl zip file
 
 # Set our volumes before we attempt to configure apache
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
+# Set appropriate owners on VOLUMEs
+RUN  chown apache:apache /var/lib/zoneminder/images /var/lib/zoneminder/events /var/log/zoneminder \
+  && chown mysql:mysql /var/lib/mysql
 
 # Configure Apache
 RUN ln -sf /etc/zm/www/zoneminder.conf /etc/httpd/conf.d/
