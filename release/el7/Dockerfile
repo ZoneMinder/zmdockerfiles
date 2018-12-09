@@ -8,6 +8,8 @@ RUN \
   && yum -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm \
   # Install the latest *release* of zoneminder
   && yum -y install zoneminder mariadb-server mod_ssl zip file \
+  # Clean up yum cache
+  && yum clean all \
   # Configure Apache
   && ln -sf /etc/zm/www/zoneminder.conf /etc/httpd/conf.d/ \
   && echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf \
