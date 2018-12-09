@@ -326,7 +326,10 @@ if [ -f /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
+# Set permissions
 chown -R mysql:mysql /var/lib/mysql/
+chown -R apache:apache /var/lib/zoneminder/events /var/lib/zoneminder/images /var/log/zoneminder
+
 # Configure then start Mysql
 if [ "$remoteDB" -eq "1" ]; then
     sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
