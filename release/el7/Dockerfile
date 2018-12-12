@@ -1,6 +1,9 @@
 FROM centos:7
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
+# Get the entrypoint script
+ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
+
 RUN \
   # Enable the EPEL repo. The repo package is part of centos base so no need fetch it.
   yum -y install epel-release \
@@ -19,9 +22,6 @@ RUN \
 
 # Set our volumes before we do anything else
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
-
-# Get the entrypoint script
-ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
 
 # Expose https port
 EXPOSE 443
