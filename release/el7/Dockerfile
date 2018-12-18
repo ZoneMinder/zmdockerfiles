@@ -22,15 +22,14 @@ RUN \
   # Install the latest *release* of zoneminder
   yum -y install zoneminder \
   # Clean up yum cache
-  && yum clean all
+  && yum clean all \
+  # Configure Apache
+  && ln -sf /etc/zm/www/zoneminder.conf /etc/httpd/conf.d/ \
+  && echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf \
+  && echo -e "# Redirect the webroot to /zm\nRedirectMatch permanent ^/$ /zm" > /etc/httpd/conf.d/redirect.conf
 
 # Set our volumes before we do anything else
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
-
-# Configure Apache
-RUN ln -sf /etc/zm/www/zoneminder.conf /etc/httpd/conf.d/
-RUN echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf
-RUN echo -e "# Redirect the webroot to /zm\nRedirectMatch permanent ^/$ /zm" > /etc/httpd/conf.d/redirect.conf
 
 # Expose https port
 EXPOSE 443
