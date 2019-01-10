@@ -102,7 +102,7 @@ RUN make && make install
 RUN ./zmlinkcontent.sh
 
 # Set our volumes before we attempt to configure apache
-VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
+VOLUME /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
 
 # Stop Apache and Mysql before we configure them
 RUN service mysql stop && service apache2 stop
@@ -151,7 +151,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #
 # docker run -d -t -p 1080:80 \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --name zoneminder \
@@ -165,7 +164,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --name zoneminder \
 #    zoneminder/zoneminder
@@ -175,7 +173,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # docker run -d -t -p 1080:80 \
 #    -e TZ='America/Los_Angeles' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --shm-size="512m" \
@@ -191,7 +188,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --shm-size="512m" \
 #    --name zoneminder \

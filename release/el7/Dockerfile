@@ -29,7 +29,7 @@ RUN \
   && echo -e "# Redirect the webroot to /zm\nRedirectMatch permanent ^/$ /zm" > /etc/httpd/conf.d/redirect.conf
 
 # Set our volumes before we do anything else
-VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
+VOLUME /var/lib/zoneminder/events /var/lib/mysql /var/log/zoneminder
 
 # Expose https port
 EXPOSE 443
@@ -62,7 +62,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #
 # docker run -d -t -p 1080:443 \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --name zoneminder \
@@ -76,7 +75,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --name zoneminder \
 #    zoneminder/zoneminder
@@ -86,7 +84,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # docker run -d -t -p 1080:443 \
 #    -e TZ='America/Los_Angeles' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --shm-size="512m" \
@@ -102,7 +99,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/images:/var/lib/zoneminder/images \
 #    -v /disk/zoneminder/logs:/var/log/zm \
 #    --shm-size="512m" \
 #    --name zoneminder \
