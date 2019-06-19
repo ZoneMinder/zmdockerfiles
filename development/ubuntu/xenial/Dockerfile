@@ -67,6 +67,8 @@ RUN apt-get update \
     libdigest-sha-perl \
     libdata-uuid-perl \
     libfile-slurp-perl \
+    libcrypt-eksblowfish-perl \
+    libdata-entropy-perl \
     perl-modules \
     libx264-dev \
     mysql-client \
