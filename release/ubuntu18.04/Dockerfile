@@ -19,7 +19,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install --assume-yes zoneminder \
     && a2enmod rewrite cgi
 
 # Setup Volumes
-VOLUME /var/lib/zoneminder/events /var/lib/zoneminder/images /var/lib/mysql /var/log/zm
+VOLUME /var/cache/zoneminder/events /var/cache/zoneminder/images /var/lib/mysql /var/log/zm
 
 # Expose http port
 EXPOSE 80
