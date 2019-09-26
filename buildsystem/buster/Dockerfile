@@ -1,5 +1,5 @@
 FROM debian:buster
-MAINTAINER Alexey Kopytov <akopytov@gmail.com>
+MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
