@@ -11,8 +11,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
 
 # Enable extra repositories
-RUN apt-get update && apt-get install -y --force-yes \
-    apt-transport-https \
+RUN apt-get update && apt-get install -y \
+    apt-transport-https apt-utils \
     curl \
     wget \
     gnupg \
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --force-yes \
     software-properties-common
 
 # Install base toolset
-RUN apt-get update && apt-get install -y --force-yes \
+RUN apt-get update && apt-get install -y \
     sudo \
     git \
     build-essential \
@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y --force-yes \
     dh-systemd \
     libdistro-info-perl \
     apache2-dev default-libmysqlclient-dev dh-linktree docutils-common ffmpeg \
-    fontconfig fontconfig-config fonts-dejavu-core gir1.2-polkit-1.0 libapr1 \ \
+    fontconfig fontconfig-config fonts-dejavu-core gir1.2-polkit-1.0 libapr1 \
     libapr1-dev libaprutil1 libaprutil1-dev libasound2 libasound2-data libass9 \
     libasyncns0 libavc1394-0 libavcodec-dev libavcodec57 libavdevice-dev \
     libavdevice57 libavfilter-dev libavfilter6 libavformat-dev libavformat57 \
