@@ -50,14 +50,14 @@ RUN apt-get update && apt-get install -y --force-yes \
     libgnutlsxx28 libgpg-error-dev libhtml-tree-perl libhttp-cookies-perl \
     libhttp-date-perl libhttp-lite-perl libhttp-message-perl \
     libhttp-negotiate-perl libidn11-dev libio-html-perl libjpeg62-turbo \
-    libjpeg62-turbo-dev libjs-jquery libjs-mootools libjs-sphinxdoc \ \
+    libjpeg62-turbo-dev libjs-jquery libjs-mootools libjs-sphinxdoc \
     libjs-underscore liblwp-mediatypes-perl liblwp-protocol-https-perl \
     libmp4v2-2 libmp4v2-dev libnet-http-perl libp11-kit-dev \
     libparams-classify-perl libpcre16-3 libpcre3-dev libpcre32-3 libpcrecpp0v5 \
     libphp-serialization-perl libpolkit-agent-1-0 libpolkit-gobject-1-0 \
     libpolkit-gobject-1-dev libpostproc-dev libpython-stdlib \
     libpython2.7-minimal libpython2.7-stdlib libssl-dev libswresample-dev \
-    libswscale-dev libsys-mmap-perl libtasn1-6-dev libunbound2 libv4l-0 \ \
+    libswscale-dev libsys-mmap-perl libtasn1-6-dev libunbound2 libv4l-0 \
     libv4l-dev libv4l2rds0 libv4lconvert0 libvlc-dev libvlc5 libvlccore9 \
     libwww-perl libwww-robotrules-perl libx264-dev net-tools nettle-dev \
     pkg-config python python-alabaster python-babel python-babel-localedata \
