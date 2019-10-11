@@ -13,14 +13,16 @@ RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
 # Drop EOL repositories
 RUN sed -i '/jessie-updates/d' /etc/apt/sources.list
 
+RUN apt-get update && apt-get install -y --force-yes apt-utils
+
 # Enable extra repositories
-RUN apt-get update && apt-get install -y --force-yes \
+RUN apt-get install -y --force-yes \
     apt-transport-https \
     curl \
     wget \
     gnupg \
     ca-certificates
-ADD preferences /etc/apt/preferences.d/
+#ADD preferences /etc/apt/preferences.d/
 RUN curl -s https://packagecloud.io/install/repositories/packpack/backports/script.deb.sh | bash
 
 # Install base toolset
