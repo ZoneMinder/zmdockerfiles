@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM ubuntu:disco
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales
@@ -16,10 +16,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ca-certificates
-
-RUN echo "deb https://zmrepo.zoneminder.com/debian/master buster/" >> /etc/apt/sources.list
-
-RUN wget -O - https://zmrepo.zoneminder.com/debian/archive-keyring.gpg | apt-key add -
 
 # Install base toolset
 RUN apt-get update && apt-get install -y \
