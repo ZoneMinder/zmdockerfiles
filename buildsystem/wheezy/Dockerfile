@@ -37,7 +37,8 @@ RUN apt-get update && apt-get install -y --force-yes \
     equivs \
     rpm \
     alien \
-    dh-systemd
+    dh-systemd \
+    libdistro-info-perl
 
 # Enable sudo without password
 RUN echo '%adm ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
