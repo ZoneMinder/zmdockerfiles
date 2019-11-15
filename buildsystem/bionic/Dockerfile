@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM i386/ubuntu:bionic
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales
