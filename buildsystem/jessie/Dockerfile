@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM i386/debian:jessie
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales

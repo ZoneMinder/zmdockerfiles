@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM i386/ubuntu:xenial
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales

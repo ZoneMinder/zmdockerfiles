@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM i386/ubuntu:trusty
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales

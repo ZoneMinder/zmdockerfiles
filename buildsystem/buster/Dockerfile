@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM i386/debian:buster
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales
