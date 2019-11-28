@@ -63,7 +63,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # docker run -d -t -p 1080:443 \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
-#    -v /disk/zoneminder/logs:/var/log/zm \
+#    -v /disk/zoneminder/logs:/var/log/zoneminder \
 #    --name zoneminder \
 #    zoneminder/zoneminder
 
@@ -75,7 +75,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/logs:/var/log/zm \
+#    -v /disk/zoneminder/logs:/var/log/zoneminder \
 #    --name zoneminder \
 #    zoneminder/zoneminder
 
@@ -85,7 +85,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e TZ='America/Los_Angeles' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
 #    -v /disk/zoneminder/mysql:/var/lib/mysql \
-#    -v /disk/zoneminder/logs:/var/log/zm \
+#    -v /disk/zoneminder/logs:/var/log/zoneminder \
 #    --shm-size="512m" \
 #    --name zoneminder \
 #    zoneminder/zoneminder
@@ -99,7 +99,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -e ZM_DB_NAME='zoneminder_database' \
 #    -e ZM_DB_HOST='my_central_db_server' \
 #    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
-#    -v /disk/zoneminder/logs:/var/log/zm \
+#    -v /disk/zoneminder/logs:/var/log/zoneminder \
 #    --shm-size="512m" \
 #    --name zoneminder \
 #    zoneminder/zoneminder
