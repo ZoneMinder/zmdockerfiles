@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM arm32v7/debian:buster
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales

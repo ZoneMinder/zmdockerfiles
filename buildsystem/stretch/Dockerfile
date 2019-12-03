@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM arm32v7/debian:stretch
 MAINTAINER ISaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales
