@@ -5,6 +5,7 @@ MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
 
 # Install base toolset
+RUN dnf -y update fedora-gpg-keys --nogpgcheck
 RUN dnf -y group install 'Development Tools'
 RUN dnf -y group install 'C Development Tools and Libraries'
 RUN dnf -y group install 'RPM Development Tools'
