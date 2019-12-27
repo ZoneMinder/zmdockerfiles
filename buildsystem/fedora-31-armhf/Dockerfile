@@ -1,6 +1,18 @@
 FROM arm32v7/fedora:31
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
+
+# Disbale Fedora rawhide repos
+RUN sed -i 's!enabled=1!enabled=0!' /etc/yum.repos.d/fedora-rawhide.repo
+RUN sed -i 's!enabled=1!enabled=0!' /etc/yum.repos.d/fedora-rawhide-modular.repo
+
+# Enable Fedora 31 release repos
+RUN sed -i '0,/enabled=0/s/enabled=0/enabled=1/' /etc/yum.repos.d/fedora.repo
+RUN sed -i '0,/enabled=0/s/enabled=0/enabled=1/' /etc/yum.repos.d/fedora-updates.repo
+
+# workaround setrlimit error
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
 # Fix missing locales
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
 
