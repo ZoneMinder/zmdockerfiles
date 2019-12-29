@@ -12,7 +12,8 @@ RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
 
 # Enable extra repositories
 RUN apt-get update && apt-get install -y \
-    apt-transport-https apt-utils \
+    apt-transport-https \
+    apt-utils \
     curl \
     wget \
     gnupg \
@@ -21,6 +22,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install base toolset
 RUN apt-get update && apt-get install -y \
+    tzdata \
     sudo \
     git \
     build-essential \
