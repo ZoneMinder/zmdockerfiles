@@ -20,7 +20,7 @@ These steps assume you have cloned [zmdockerfliles](https://github.com/ZoneMinde
 
 - Set the paths for HEAD and GIT_HOME to something your user account can write to.
 - All the commands used and their paths are shown at the top of the script. Verify these commands exist on your system and the paths are correct. For example, you may need to install `jq`.
-- Scroll down to the portion of the script labelled "STEP 2". Add, remove, or edit the lines that start the packpack build to suite.
+- Scroll down to the portion of the script labelled "STEP 2". Add, remove, or edit the lines that start each packpack build to suite.
 
 **Step 2:** Copy `synczmrepo.sh` to your local bin folder and make it executable
 
