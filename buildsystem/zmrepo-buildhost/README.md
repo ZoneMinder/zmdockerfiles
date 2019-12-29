@@ -14,7 +14,7 @@ Before a new machine can be added as a build host, the following must be done fi
 
 INSTALLATION STEPS
 ------------------
-These steps assume you have cloned zmdockerfliles to your local drive and are relative to the folder `buildsystem/zmrepo-buildhost`.
+These steps assume you have cloned [zmdockerfliles](https://github.com/ZoneMinder/zmdockerfiles) to your local drive and are relative to the folder `buildsystem/zmrepo-buildhost`.
 
 **Step 1:** Open `synczmrepo.sh` with your favorite text editor:
 
