@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install base toolset
 RUN apt-get update && apt-get install -y \
+    tzdata \
     sudo \
     git \
     build-essential \
