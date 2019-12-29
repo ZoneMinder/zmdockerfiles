@@ -2,6 +2,11 @@
 
 The instructions and files contained in this folder allow any third party to contribute builds to ZMRepo that otherwise would not be available.
 
+OPERATION
+---------
+
+The synczmrepo service manages the shell script with the same name. The shell script will run continuously, checking github once a minute for new changes. When a new commit is detected, the script will run the desired build(s) then rysnc them to zmrepo. Once sent to zmrepo, the packages will be available to the public momentarily.
+
 PREREQUISITES
 -------------
 
