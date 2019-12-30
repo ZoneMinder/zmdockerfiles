@@ -1,4 +1,4 @@
-FROM ubuntu:disco
+FROM ubuntu:eoan
 MAINTAINER Isaac Connor <isaac@zoneminder.com>
 
 # Fix missing locales
