@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
     alien \
     dh-systemd \
     libdistro-info-perl \
-    apache2-dev bzip2 default-libmysqlclient-dev dh-linktree docutils-common \
+    apache2-dev bzip2 dh-linktree docutils-common \
     ffmpeg fontconfig fontconfig-config fonts-dejavu-core gir1.2-polkit-1.0 \
     libapr1 libapr1-dev libaprutil1 libaprutil1-dev libasound2 libasound2-data \
     libass9 libasyncns0 libavc1394-0 libavcodec-dev libavcodec58 libavdevice-dev \
@@ -45,10 +45,10 @@ RUN apt-get update && apt-get install -y \
     libb-hooks-op-check-perl libbluray2 libbs2b0 libbz2-1.0 libbz2-dev libcaca0 \
     libcairo2 libcdio-cdda2 libcdio-paranoia2 libcdio18 libchromaprint1 \
     libclass-mix-perl libcrypt-eksblowfish-perl libcrypt-rijndael-perl \
-    libcrystalhd3 libcurl3-gnutls libcurl4-gnutls-dev libdata-entropy-perl \
+    libcurl3-gnutls libcurl4-gnutls-dev libdata-entropy-perl \
     libdata-float-perl libdata-uuid-perl libdate-manip-perl libdatrie1 \
     libdbd-mysql-perl libdbi-perl libdc1394-22 libdevel-callchecker-perl \
-    libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 \
+    libdrm-amdgpu1 libdrm-common libdrm-nouveau2 libdrm-radeon1 \
     libdrm2 libdynaloader-functions-perl libedit2 libevent-2.1-6 libexpat1 \
     libexpat1-dev libfftw3-double3 libflac8 libflite1 libfontconfig1 \
     libfreetype6 libfribidi0 libgcrypt20-dev libgdk-pixbuf2.0-0 \
@@ -58,9 +58,9 @@ RUN apt-get update && apt-get install -y \
     libgnutls-openssl27 libgnutls28-dev libgnutls30 libgnutlsxx28 \
     libgpg-error-dev libgraphite2-3 libgsm1 libharfbuzz0b libhttp-lite-perl \
     libidn11 libidn2-0-dev libidn2-dev libiec61883-0 libjack-jackd2-0 libjbig0 \
-    libjpeg62-turbo libjpeg62-turbo-dev libjs-jquery \
+    libjs-jquery \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
-    libldap2-dev libllvm7 libmp3lame0 libmp4v2-2 libmp4v2-dev libmpg123-0 \
+    libldap2-dev libllvm7 libmp3lame0 libmpg123-0 \
     libmysofa0 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
     libopenal-data libopenal1 libopenjp2-7 libopenmpt0 libopus0 libp11-kit-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparams-classify-perl \
