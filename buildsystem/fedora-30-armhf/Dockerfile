@@ -1,6 +1,13 @@
 FROM arm32v7/fedora:30
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
+# Disbale Fedora updates-testing repos
+RUN sed -i 's!enabled=1!enabled=0!' /etc/yum.repos.d/fedora-updates-testing.repo
+RUN sed -i 's!enabled=1!enabled=0!' /etc/yum.repos.d/fedora-updates-testing-modular.repo
+
+# workaround setrlimit error
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
 # Fix missing locales
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
 
