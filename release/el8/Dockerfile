@@ -6,8 +6,10 @@ ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entr
 
 ## Dependencies layer
 RUN \
+  # Enable PowerTools repository to reach all required dependencies
+  dnf -y install 'dnf-command(config-manager)' && dnf config-manager --set-enabled PowerTools \
   # Enable the EPEL repo. The repo package is part of centos base so no need fetch it.
-  dnf -y install epel-release \
+  && dnf -y install epel-release \
   # Fetch and enable the RPMFusion repo
   && dnf -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
   # Install dependencies
