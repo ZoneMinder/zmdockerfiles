@@ -75,13 +75,13 @@ start_packpack () {
 
   if [ "$?" -eq 0 ]; then
       echo
-      echo "${OS} ${DIST} build succeeded."
+      echo "SUCCESS: ${OS} ${DIST} build completed."
       echo "Transferring packages to zmrepo..."
       echo
       rsync_xfer
   else
       echo
-      echo "${OS} ${DIST} build failed."
+      echo "ERROR: ${OS} ${DIST} build failed."
       echo
       ((build_error++))
   fi
@@ -103,7 +103,7 @@ rsync_xfer () {
 
   if [ "$?" -eq 0 ]; then
     echo 
-    echo "Packages transferred successfully."
+    echo "SUCCESS: Packages transferred successfully."
     echo
   else 
     echo
@@ -154,7 +154,7 @@ while true; do
     ## STEP 3 - Report build summary
     if [ $build_error -eq 0 ] && [ $rsync_error -eq 0 ]; then
       echo
-      echo "All builds reported success"
+      echo "SUCCESS: All builds reported completion."
       echo
     else
       if [ $build_error -gt 0 ]; then
@@ -165,7 +165,7 @@ while true; do
       fi
       if [ $rsync_error -gt 0 ]; then
         echo
-        echo "ERROR: ${rysnc_error} rsync transfers failed!"
+        echo "ERROR: ${rsync_error} rsync transfers failed!"
         echo
         rsync_error=0
       fi          
@@ -173,7 +173,9 @@ while true; do
 
     # Update HEAD with the latest git commit hash
     echo "${remote_head}" > "${HEAD}"
-    echo "Finished. Waiting for new changes to the ZoneMinder github repo..."
+    echo
+    echo "FINISHED: Waiting for new changes to the ZoneMinder github repo..."
+    echo
 
   elif [ "${remote_head}" == "null"  ]; then
       echo
