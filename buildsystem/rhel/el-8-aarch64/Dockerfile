@@ -15,7 +15,7 @@ RUN \
     # Fix missing yum symlink
     && ln -sf /usr/bin/dnf /usr/bin/yum \
     # Set the execute bit on our qemu binary
-    chmod +x /usr/bin/qemu-aarch64-static
+    && chmod +x /usr/bin/qemu-aarch64-static
 
 # Enable extra tools and repositories
 RUN \
