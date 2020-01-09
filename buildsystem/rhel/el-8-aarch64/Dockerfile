@@ -4,13 +4,18 @@ MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 # - fix missing locales
 ENV LC_ALL="C" LANG="en_US.UTF-8"
 
+# Add the latest version of qemu-aarch64-static to allow running container on amd64 architecture
+ADD https://github.com/multiarch/qemu-user-static/releases/latest/download/qemu-aarch64-static /usr/bin/qemu-aarch64-static
+
 # Apply various fixes
 RUN \
     # Fix dnf best candidate failures
     echo "module_hotfixes=1" >> /etc/dnf/dnf.conf \
     && echo "best=0" >> /etc/dnf/dnf.conf \
     # Fix missing yum symlink
-    && ln -sf /usr/bin/dnf /usr/bin/yum
+    && ln -sf /usr/bin/dnf /usr/bin/yum \
+    # Set the execute bit on our qemu binary
+    chmod +x /usr/bin/qemu-aarch64-static
 
 # Enable extra tools and repositories
 RUN \
