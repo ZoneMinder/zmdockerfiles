@@ -26,7 +26,7 @@ RUN \
     # Enable extra repositories
     && dnf -y install epel-release \
     # Fetch and enable the RPMFusion repo
-    && dnf -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
+    && dnf -y install --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
     # added PowerTools as suggested at:
     #   https://fedoraproject.org/wiki/EPEL
     && dnf config-manager --set-enabled PowerTools
