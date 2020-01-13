@@ -14,6 +14,8 @@ RUN \
     && echo "best=0" >> /etc/dnf/dnf.conf \
     # Fix missing yum symlink
     && ln -sf /usr/bin/dnf /usr/bin/yum \
+    # Remove unsupported flag in repo files
+    && sed -i 's!failovermethod=priority!!' /etc/yum.repos.d/*.repo \
     # Set the execute bit on our qemu binary
     && chmod +x /usr/bin/qemu-aarch64-static
 
@@ -26,7 +28,7 @@ RUN \
     # Enable extra repositories
     && dnf -y install epel-release \
     # Fetch and enable the RPMFusion repo
-    && dnf -y install --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
+    && dnf -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
     # added PowerTools as suggested at:
     #   https://fedoraproject.org/wiki/EPEL
     && dnf config-manager --set-enabled PowerTools
