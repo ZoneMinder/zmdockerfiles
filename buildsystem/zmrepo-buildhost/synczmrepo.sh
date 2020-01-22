@@ -15,6 +15,10 @@ HEAD="/home/youraccount/HEAD"
 # Parent folder to save ZoneMinder source from github
 GIT_HOME="/home/youraccount/git"
 
+# Enter your personal Git token
+# See: https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
+GIT_TOKEN="abcdefghijklmnopqrstuvwxyz0123456789"
+
 MKDIR="/bin/mkdir"
 RSYNC="/usr/bin/rsync"
 CP="/bin/cp"
@@ -134,7 +138,7 @@ while true; do
   fi
 
   local_head=$(${CAT} ${HEAD})
-  remote_head=$(${CURL} -s 'https://api.github.com/repos/ZoneMinder/zoneminder/git/refs/heads/master' | ${JQ} -r '.object.sha')
+  remote_head=$(${CURL} -H "Authorization: token $GIT_TOKEN" -s 'https://api.github.com/repos/ZoneMinder/zoneminder/git/refs/heads/master' | ${JQ} -r '.object.sha')
 
   if [ "${local_head}" != "${remote_head}" ] && [ "${remote_head}" != "null"  ]; then
 
