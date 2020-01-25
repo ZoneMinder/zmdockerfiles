@@ -122,6 +122,15 @@ rsync_xfer () {
 # MAIN PROGRAM #
 ################
 
+# Verify the provided github token is good
+result=$(${CURL} -s -H "Authorization: token ${GIT_TOKEN}" https://api.github.com/ | ${JQ} -r ".message")
+if [ "$result" == "Bad credentials"]; then
+  echo
+  echo "FATAL: Github token appears to be invalid."
+  echo
+  exit 99
+fi
+
 # pre-loop init
 build_error=0
 rsync_error=0
@@ -138,7 +147,7 @@ while true; do
   fi
 
   local_head=$(${CAT} ${HEAD})
-  remote_head=$(${CURL} -H "Authorization: token $GIT_TOKEN" -s 'https://api.github.com/repos/ZoneMinder/zoneminder/git/refs/heads/master' | ${JQ} -r '.object.sha')
+  remote_head=$(${CURL} -H "Authorization: token ${GIT_TOKEN}" -s 'https://api.github.com/repos/ZoneMinder/zoneminder/git/refs/heads/master' | ${JQ} -r '.object.sha')
 
   if [ "${local_head}" != "${remote_head}" ] && [ "${remote_head}" != "null"  ]; then
 
