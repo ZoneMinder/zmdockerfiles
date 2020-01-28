@@ -127,7 +127,7 @@ rsync_xfer () {
 
 # Verify the provided github token is good
 result=$(${CURL} -s -H "Authorization: token ${GIT_TOKEN}" https://api.github.com/ | ${JQ} -r ".message")
-if [ "$result" == "Bad credentials"]; then
+if [ "$result" == "Bad credentials" ]; then
   echo
   echo "FATAL: Github token appears to be invalid."
   echo
