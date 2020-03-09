@@ -15,6 +15,13 @@ HEAD="/home/youraccount/HEAD"
 # Parent folder to save ZoneMinder source from github
 GIT_HOME="/home/youraccount/git"
 
+# Enter your personal Git token
+# See: https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
+GIT_TOKEN="abcdefghijklmnopqrstuvwxyz0123456789"
+
+# Recommend setting this to the number of real cpu cores, not threads
+NUM_CPUS=4
+
 MKDIR="/bin/mkdir"
 RSYNC="/usr/bin/rsync"
 CP="/bin/cp"
@@ -118,6 +125,15 @@ rsync_xfer () {
 # MAIN PROGRAM #
 ################
 
+# Verify the provided github token is good
+result=$(${CURL} -s -H "Authorization: token ${GIT_TOKEN}" https://api.github.com/ | ${JQ} -r ".message")
+if [ "$result" == "Bad credentials" ]; then
+  echo
+  echo "FATAL: Github token appears to be invalid."
+  echo
+  exit 99
+fi
+
 # pre-loop init
 build_error=0
 rsync_error=0
@@ -134,7 +150,7 @@ while true; do
   fi
 
   local_head=$(${CAT} ${HEAD})
-  remote_head=$(${CURL} -s 'https://api.github.com/repos/ZoneMinder/zoneminder/git/refs/heads/master' | ${JQ} -r '.object.sha')
+  remote_head=$(${CURL} -H "Authorization: token ${GIT_TOKEN}" -s 'https://api.github.com/repos/ZoneMinder/zoneminder/git/refs/heads/master' | ${JQ} -r '.object.sha')
 
   if [ "${local_head}" != "${remote_head}" ] && [ "${remote_head}" != "null"  ]; then
 
@@ -143,13 +159,13 @@ while true; do
 
     ## STEP 2 - Start PackPack builds, one at a time
 
-    OS=fedora DIST=30 DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
+    SMPFLAGS=-j${NUM_CPUS} OS=fedora DIST=30 DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
 
-    OS=fedora DIST=31 DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
+    SMPFLAGS=-j${NUM_CPUS} OS=fedora DIST=31 DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
 
-    OS=ubuntu DIST=xenial DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
+    SMPFLAGS=-j${NUM_CPUS} OS=ubuntu DIST=xenial DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
 
-    OS=ubuntu DIST=bionic DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
+    SMPFLAGS=-j${NUM_CPUS} OS=ubuntu DIST=bionic DOCKER_REPO=knnniggett/packpack ARCH=armhf start_packpack
 
     ## STEP 3 - Report build summary
     if [ $build_error -eq 0 ] && [ $rsync_error -eq 0 ]; then
