@@ -1,0 +1,13 @@
+[Unit]
+Description=ZoneMinder ZMRepo Synchronization Service
+Requires=docker.service
+After=network.target docker.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/bin/bash /usr/local/bin/synczmrepo.sh
+User=youraccount
+
+[Install]
+WantedBy=multi-user.target

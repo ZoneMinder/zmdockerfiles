@@ -1,4 +1,4 @@
-FROM centos:7
+FROM centos:8
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
 # Get the entrypoint script
@@ -6,23 +6,25 @@ ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entr
 
 ## Dependencies layer
 RUN \
+  # Enable PowerTools repository to reach all required dependencies
+  dnf -y install 'dnf-command(config-manager)' && dnf config-manager --set-enabled PowerTools \
   # Enable the EPEL repo. The repo package is part of centos base so no need fetch it.
-  yum -y install epel-release \
+  && dnf -y install epel-release \
   # Fetch and enable the RPMFusion repo
-  && yum -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm \
+  && dnf -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
   # Install dependencies
-  && yum -y install mariadb-server mod_ssl zip file \
-  # Clean up yum cache
-  && yum clean all \
+  && dnf -y install mariadb-server mod_ssl zip file \
+  # Clean up dnf cache
+  && dnf clean all \
   # Make sure the entrypoint is executable
   && chmod 755 /usr/local/bin/entrypoint.sh
 
 ## ZoneMinder layer
 RUN \
   # Install the latest *release* of zoneminder
-  yum -y install zoneminder \
-  # Clean up yum cache
-  && yum clean all \
+  dnf -y install zoneminder \
+  # Clean up dnf cache
+  && dnf clean all \
   # Configure Apache
   && ln -sf /etc/zm/www/zoneminder.conf /etc/httpd/conf.d/ \
   && echo "ServerName localhost" > /etc/httpd/conf.d/servername.conf \

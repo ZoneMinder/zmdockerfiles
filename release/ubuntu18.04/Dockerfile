@@ -10,7 +10,7 @@ RUN apt install --assume-yes --no-install-recommends gnupg
 
 # Configure Zoneminder PPA
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ABE4C7F993453843F0AEB8154D0BF748776FFB04 \
-    && echo deb http://ppa.launchpad.net/iconnor/zoneminder-1.32/ubuntu bionic main > /etc/apt/sources.list.d/zoneminder.list \
+    && echo deb http://ppa.launchpad.net/iconnor/zoneminder-1.34/ubuntu bionic main > /etc/apt/sources.list.d/zoneminder.list \
     && apt update
 
 # Install zoneminder

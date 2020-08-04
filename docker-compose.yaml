@@ -1,0 +1,23 @@
+version: '3.1'
+services:
+    zoneminder:
+        container_name: zoneminder
+        image: zoneminderhq/zoneminder:latest-ubuntu18.04
+        restart: unless-stopped
+        ports:
+            - 7878:80
+        network_mode: "bridge"
+        privileged: true
+        shm_size: 512M
+        environment:
+            - TZ=Australia/Perth
+        volumes:
+            - events:/var/cache/zoneminder/events
+            - images:/var/cache/zoneminder/images
+            - mysql:/var/lib/mysql
+            - logs:/var/log/zoneminder
+volumes:
+  events:
+  images:
+  mysql:
+  logs:
