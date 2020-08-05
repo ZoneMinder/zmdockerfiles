@@ -9,6 +9,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Don't install recommends
 RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
+RUN echo "deb https://zmrepo.zoneminder.com/debian/master focal/" >> /etc/apt/sources.list
+
+RUN wget -O - https://zmrepo.zoneminder.com/debian/archive-keyring.gpg | apt-key add -
 
 RUN apt-get update && apt-get install -y \
     apt-transport-https \
@@ -66,7 +69,7 @@ RUN apt-get update && apt-get install -y \
     libpciaccess0 libpcre16-3 libpcre3-dev libpcre32-3 libpcrecpp0v5 \
     libpgm-5.2-0 libphp-serialization-perl libpixman-1-0 libpng16-16 \
     libpolkit-agent-1-0 libpolkit-gobject-1-0 libpolkit-gobject-1-dev \
-    libpostproc-dev libpostproc55 libpulse0 libpython-stdlib \
+    libpostproc-dev libpostproc55 libpulse0 libpython2-stdlib \
     libpython2.7-minimal libpython2.7-stdlib libraw1394-11 librsvg2-2 \
     librubberband2 libsamplerate0 libsctp-dev libsctp1 libsdl2-2.0-0 libsensors5 \
     libshine3 libslang2 libsnappy1v5 libsndfile1 libsndio7.0 libsodium23 \
@@ -87,8 +90,8 @@ RUN apt-get update && apt-get install -y \
     python-babel-localedata python-certifi python-chardet python-docutils \
     python-idna python-imagesize python-jinja2 python-markupsafe python-minimal \
     python-pkg-resources python-pygments python-requests python-roman python-six \
-    python-sphinx python-typing python-tz python-urllib3 python2.7 \
-    python2.7-minimal python3-distutils python3-lib2to3 sgml-base \
+    sphinx-doc python-typing python-tz python-urllib3 \
+    python3-distutils python3-lib2to3 sgml-base \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
     zlib1g-dev \
     bzip2 libbz2-1.0 libcurl3-gnutls libexpat1 libglib2.0-0 libglib2.0-data \
