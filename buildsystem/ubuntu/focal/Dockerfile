@@ -68,17 +68,17 @@ RUN apt-get update && apt-get install -y \
     libgnutls-openssl27 libgnutls28-dev libgnutls30 libgnutlsxx28 \
     libgpg-error-dev libgraphite2-3 libgsm1 libharfbuzz0b libhttp-lite-perl \
     libidn11 libidn2-0-dev libidn2-dev libiec61883-0 libjack-jackd2-0 libjbig0 \
-    libjpeg62-turbo libjpeg62-turbo-dev libjs-jquery \
+    libjpeg8-turbo libjpeg8-turbo-dev libjs-jquery \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
     libldap2-dev libllvm7 libmp3lame0 libmp4v2-2 libmp4v2-dev libmpg123-0 \
-    libmysofa0 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
+    libmysofa1 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
     libopenal-data libopenal1 libopenjp2-7 libopenmpt0 libopus0 libp11-kit-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparams-classify-perl \
     libpciaccess0 libpcre16-3 libpcre3-dev libpcre32-3 libpcrecpp0v5 \
     libpgm-5.2-0 libphp-serialization-perl libpixman-1-0 libpng16-16 \
     libpolkit-agent-1-0 libpolkit-gobject-1-0 libpolkit-gobject-1-dev \
     libpostproc-dev libpostproc55 libpulse0 libpython2-stdlib \
-    libpython2.7-minimal libpython2.7-stdlib libraw1394-11 librsvg2-2 \
+    libraw1394-11 librsvg2-2 \
     librubberband2 libsamplerate0 libsctp-dev libsctp1 libsdl2-2.0-0 libsensors5 \
     libshine3 libslang2 libsnappy1v5 libsndfile1 libsndio7.0 libsodium23 \
     libsoxr0 libspeex1 libssh-gcrypt-4 libssl-dev libssl1.1 \
@@ -86,19 +86,19 @@ RUN apt-get update && apt-get install -y \
     libthai-data libthai0 libtheora0 libtiff5 libtwolame0 libunbound8 \
     libusb-1.0-0 libuuid1 libv4l-0 libv4l-dev libv4l2rds0 libv4lconvert0 \
     libva-drm2 libva-x11-2 libva2 libvdpau1 libvlc-dev libvlc5 libvlccore9 \
-    libvorbis0a libvorbisenc2 libvorbisfile3 libvpx5 libwavpack1 \
+    libvorbis0a libvorbisenc2 libvorbisfile3 libvpx6 libwavpack1 \
     libwayland-client0 libwayland-cursor0 libwayland-egl1 libwebp6 libwebpmux3 \
     libwrap0 libx11-6 libx11-data libx11-xcb1 libx264-155 libx264-dev \
-    libx265-165 libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 \
+    libx265-179 libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 \
     libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb1 \
     libxcursor1 libxdamage1 libxdmcp6 libxext6 libxfixes3 libxi6 libxinerama1 \
     libxkbcommon0 libxrandr2 libxrender1 libxshmfence1 libxss1 libxv1 \
     libxvidcore4 libxxf86vm1 libzmq5 libzvbi-common libzvbi0 mysql-common \
     net-tools nettle-dev pkg-config python python-alabaster python-babel \
     python-babel-localedata python-certifi python-chardet python-docutils \
-    python-idna python-imagesize python-jinja2 python-markupsafe python-minimal \
+    python-idna python-imagesize python-jinja2 python-markupsafe \
     python-pkg-resources python-pygments python-requests python-roman python-six \
-    sphinx-doc python-typing python-tz python-urllib3 \
+    sphinx-doc python-typing python-tz \
     python3-distutils python3-lib2to3 sgml-base \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
     zlib1g-dev \
