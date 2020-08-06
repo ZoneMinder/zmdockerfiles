@@ -9,6 +9,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Don't install recommends
 RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
+
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    curl \
+    wget \
+    gnupg \
+    ca-certificates
+
 RUN echo "deb https://zmrepo.zoneminder.com/debian/master focal/" >> /etc/apt/sources.list
 
 RUN wget -O - https://zmrepo.zoneminder.com/debian/archive-keyring.gpg | apt-key add -
