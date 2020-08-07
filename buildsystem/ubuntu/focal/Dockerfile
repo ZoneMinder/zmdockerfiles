@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
     alien \
     dh-systemd \
     libdistro-info-perl \
-    apache2-dev bzip2 default-libmysqlclient-dev dh-linktree docutils-common \
+    apache2-dev bzip2 libmysqlclient-dev default-libmysqlclient-dev dh-linktree docutils-common \
     ffmpeg fontconfig fontconfig-config fonts-dejavu-core gir1.2-polkit-1.0 \
     libapr1 libapr1-dev libaprutil1 libaprutil1-dev libasound2 libasound2-data \
     libass9 libasyncns0 libavc1394-0 libavcodec-dev libavcodec58 libavdevice-dev \
