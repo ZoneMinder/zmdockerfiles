@@ -59,7 +59,7 @@ RUN apt-get update && apt-get install -y \
     libdata-float-perl libdata-uuid-perl libdate-manip-perl libdatrie1 \
     libdbd-mysql-perl libdbi-perl libdc1394-22 libdevel-callchecker-perl \
     libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 \
-    libdrm2 libdynaloader-functions-perl libedit2 libevent-2.1-6 libexpat1 \
+    libdrm2 libdynaloader-functions-perl libedit2 libexpat1 \
     libexpat1-dev libfftw3-double3 libflac8 libflite1 libfontconfig1 \
     libfreetype6 libfribidi0 libgcrypt20-dev libgdk-pixbuf2.0-0 \
     libgdk-pixbuf2.0-common libgl1 libgl1-mesa-dri libglapi-mesa libglib2.0-0 \
@@ -68,7 +68,7 @@ RUN apt-get update && apt-get install -y \
     libgnutls-openssl27 libgnutls28-dev libgnutls30 libgnutlsxx28 \
     libgpg-error-dev libgraphite2-3 libgsm1 libharfbuzz0b libhttp-lite-perl \
     libidn11 libidn2-0-dev libidn2-dev libiec61883-0 libjack-jackd2-0 libjbig0 \
-    libjpeg8-turbo libjpeg8-turbo-dev libjs-jquery \
+    libjpeg-turbo8 libjpeg-turbo8-dev libjs-jquery \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
     libldap2-dev libllvm7 libmp3lame0 libmp4v2-2 libmp4v2-dev libmpg123-0 \
     libmysofa1 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
@@ -97,7 +97,7 @@ RUN apt-get update && apt-get install -y \
     net-tools nettle-dev pkg-config python python-alabaster python-babel \
     python-babel-localedata python-certifi python-chardet python-docutils \
     python-idna python-imagesize python-jinja2 python-markupsafe \
-    python-pkg-resources python-pygments python-requests python-roman python-six \
+    python-pkg-resources python-pygments python-roman python-six \
     sphinx-doc python-typing python-tz \
     python3-distutils python3-lib2to3 sgml-base \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
