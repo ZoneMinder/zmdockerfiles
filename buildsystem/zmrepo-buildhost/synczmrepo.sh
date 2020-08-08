@@ -106,7 +106,7 @@ rsync_xfer () {
     targetfolder="travis"
   fi
 
-  $RSYNC --ignore-missing-args --exclude 'external-repo.noarch.rpm' build/*.{rpm,deb,dsc,tar.xz,buildinfo,changes} zmrepo@zmrepo.zoneminder.com:${targetfolder}/ 2>&1
+  $RSYNC -l --ignore-missing-args --exclude 'external-repo.noarch.rpm' build/*.{rpm,deb,dsc,tar.xz,buildinfo,changes} zmrepo@zmrepo.zoneminder.com:${targetfolder}/ 2>&1
 
   if [ "$?" -eq 0 ]; then
     echo 
