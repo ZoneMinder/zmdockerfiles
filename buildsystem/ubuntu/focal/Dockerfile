@@ -98,7 +98,7 @@ RUN apt-get update && apt-get install -y \
     python-babel-localedata python-certifi python-chardet python-docutils \
     python-idna python-imagesize python-jinja2 python-markupsafe \
     python-pkg-resources python-pygments python-roman python-six \
-    sphinx-doc python-typing python-tz \
+    sphinx-doc python3-sphinx python-typing python-tz \
     python3-distutils python3-lib2to3 sgml-base \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
     zlib1g-dev \
