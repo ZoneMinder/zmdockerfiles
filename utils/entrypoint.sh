@@ -93,8 +93,35 @@ initialize () {
         fi
     done
 
+    if [ -e /etc/redhat-release ] && [ ! -e /etc/pki/tls/private/localhost.key ]; then
+        echo -n " * Generating tls certificates   "
+        openssl req \
+            -x509 \
+            -newkey rsa:2048 \
+            -nodes \
+            -keyout /etc/pki/tls/private/localhost.key \
+            -out /etc/pki/tls/certs/localhost.crt \
+            -days 365 \
+            -subj "/C=US/ST=New York/L=New York/O=Cert/OU=Cert/CN=example.com" \
+            &> /dev/null
+
+        if [ $? -ne 0 ]; then
+            echo
+            echo " * Fatal: Unable to generate openssl certificates"
+            exit 96
+        fi
+
+        echo "...done"
+    fi
+
     counter=0
-    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_NAME; do
+    echo "zm_db_host $ZM_DB_HOST"
+    echo "zm_db_user $ZM_DB_USER"
+    echo "zm_db_pass $ZM_DB_PASS"
+    echo "zm_db_pass_file $ZM_DB_PASS_FILE"
+    echo "zm_db_name $ZM_DB_NAME"
+
+    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
         if [ -n "$CREDENTIAL" ]; then
             counter=$((counter+1))
         fi
@@ -329,6 +356,10 @@ fi
 chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
 if [ "$remoteDB" -eq "1" ]; then
+    if [ -n "$ZM_DB_PASS_FILE" ]; then
+        export ZM_DB_PASS=$(cat $ZM_DB_PASS_FILE)
+    fi
+
     sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
     sed -i -e "s/ZM_DB_USER=.*$/ZM_DB_USER=$ZM_DB_USER/g" $ZMCONF
     sed -i -e "s/ZM_DB_PASS=.*$/ZM_DB_PASS=$ZM_DB_PASS/g" $ZMCONF

@@ -2,7 +2,7 @@ FROM centos:8
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
 # Get the entrypoint script
-ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
+ADD https://raw.githubusercontent.com/douglasjreynolds/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
 
 ## Dependencies layer
 RUN \
@@ -80,6 +80,19 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    -v /disk/zoneminder/logs:/var/log/zoneminder \
 #    --name zoneminder \
 #    zoneminder/zoneminder
+
+# Here is an example using a Docker Secrets type password file:
+
+# docker run -d -t -p 1080:443 \
+#    -e ZM_DB_USER='zmuser' \
+#    -e ZM_DB_PASS_FILE='/run/secure/zm_db_password' \
+#    -e ZM_DB_NAME='zoneminder_database' \
+#    -e ZM_DB_HOST='my_central_db_server' \
+#    -v /disk/zoneminder/events:/var/lib/zoneminder/events \
+#    -v /disk/zoneminder/logs:/var/log/zoneminder \
+#    --name zoneminder \
+#    zoneminder/zoneminder
+
 
 # Here is an example using the options described above with the internal database:
 #
