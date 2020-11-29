@@ -138,6 +138,20 @@ initialize () {
         echo " * Fatal: Remote database credentials not set correctly."
         exit 97
     fi
+
+    # Update php-fpm socket owner for cent8
+    if [ -e /etc/php-fpm.d/www.conf ]; then
+        sed -E 's/^;(listen.(group|owner) = ).*/\1apache/g' /etc/php-fpm.d/www.conf | \
+            sed -E 's/^(listen\.acl_users.*)/;\1/' > /etc/php-fpm.d/www.conf.n
+
+        if [ $? -ne 0 ]; then
+            echo
+            echo " * Unable to update php-fpm file"
+            exit 95
+        fi
+
+        mv -f /etc/php-fpm.d/www.conf.n /etc/php-fpm.d/www.conf
+    fi
 }
 
 # Usage: get_mysql_option SECTION VARNAME DEFAULT
