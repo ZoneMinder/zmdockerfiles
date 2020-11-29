@@ -2,7 +2,7 @@ FROM centos:8
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
 # Get the entrypoint script
-ADD https://raw.githubusercontent.com/douglasjreynolds/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
+ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
 
 ## Dependencies layer
 RUN \
