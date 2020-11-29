@@ -74,6 +74,13 @@ initialize () {
         fi
     done
 
+    # Do we have php-fpm installed
+    for FILE in "/usr/sbin/php-fpm"; do
+        if [ -f $FILE ]; then
+            PHPFPM=$FILE
+        fi
+    done
+
     for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do
         if [ -z $FILE ]; then
             echo
@@ -115,12 +122,6 @@ initialize () {
     fi
 
     counter=0
-    echo "zm_db_host $ZM_DB_HOST"
-    echo "zm_db_user $ZM_DB_USER"
-    echo "zm_db_pass $ZM_DB_PASS"
-    echo "zm_db_pass_file $ZM_DB_PASS_FILE"
-    echo "zm_db_name $ZM_DB_NAME"
-
     for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
         if [ -n "$CREDENTIAL" ]; then
             counter=$((counter+1))
@@ -141,6 +142,8 @@ initialize () {
 
     # Update php-fpm socket owner for cent8
     if [ -e /etc/php-fpm.d/www.conf ]; then
+        mkdir -p /var/run/php-fpm
+
         sed -E 's/^;(listen.(group|owner) = ).*/\1apache/g' /etc/php-fpm.d/www.conf | \
             sed -E 's/^(listen\.acl_users.*)/;\1/' > /etc/php-fpm.d/www.conf.n
 
@@ -314,6 +317,20 @@ chk_remote_mysql () {
 
 # Apache service management
 start_http () {
+    if [[ -n $PHPFPM ]]; then
+        # this is for running under cent8
+        echo -n " * Starting php-fpm web service"
+        $PHPFPM &> /dev/null
+        RETVAL=$?
+
+        if [[ $RETVAL -eq 0 ]]; then
+            echo "   ...done."
+        else
+            echo "   ...failed!"
+            exit 1
+        fi
+    fi
+
     echo -n " * Starting Apache http web server service"
     # Debian requires we load the contents of envvars before we can start apache
     if [ -f /etc/apache2/envvars ]; then
@@ -325,6 +342,7 @@ start_http () {
         echo "   ...done."
     else
         echo "   ...failed!"
+        exit 1
     fi
 }
 
