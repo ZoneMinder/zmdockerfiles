@@ -323,6 +323,7 @@ start_zoneminder () {
         echo "   ...done."
     else
         echo "   ...failed!"
+        exit 1
     fi
 }
 
@@ -386,10 +387,5 @@ start_http
 # Start ZoneMinder
 start_zoneminder
 
-# Stay in a loop to keep the container running
-while :
-do
-    # perhaps output some stuff here or check apache & mysql are still running
-    sleep 2
-done
-
+# tail logs while running
+tail -F /var/log/zoneminder/zm*.log
