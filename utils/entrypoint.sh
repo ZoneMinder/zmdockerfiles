@@ -390,7 +390,7 @@ chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
 if [ "$remoteDB" -eq "1" ]; then
     if [ -n "$ZM_DB_PASS_FILE" ]; then
-        export ZM_DB_PASS=$(cat $ZM_DB_PASS_FILE)
+        ZM_DB_PASS=$(cat $ZM_DB_PASS_FILE)
     fi
 
     sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
