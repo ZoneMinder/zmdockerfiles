@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     software-properties-common
 
 # Install base toolset
-RUN apt-get update && apt-get install -y \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get install -y \
     tzdata \
     sudo \
     git \
