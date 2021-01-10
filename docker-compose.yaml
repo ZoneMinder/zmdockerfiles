@@ -10,7 +10,7 @@ services:
         privileged: true
         shm_size: 512M
         environment:
-            - TZ=Australia/Perth
+            - TZ=${TZ:-Australia/Perth}
         volumes:
             - events:/var/cache/zoneminder/events
             - images:/var/cache/zoneminder/images
