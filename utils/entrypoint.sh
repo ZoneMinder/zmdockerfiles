@@ -100,27 +100,6 @@ initialize () {
         fi
     done
 
-    if [ -e /etc/redhat-release ] && [ ! -e /etc/pki/tls/private/localhost.key ]; then
-        echo -n " * Generating tls certificates   "
-        openssl req \
-            -x509 \
-            -newkey rsa:2048 \
-            -nodes \
-            -keyout /etc/pki/tls/private/localhost.key \
-            -out /etc/pki/tls/certs/localhost.crt \
-            -days 365 \
-            -subj "/C=US/ST=New York/L=New York/O=Cert/OU=Cert/CN=example.com" \
-            &> /dev/null
-
-        if [ $? -ne 0 ]; then
-            echo
-            echo " * Fatal: Unable to generate openssl certificates"
-            exit 96
-        fi
-
-        echo "...done"
-    fi
-
     counter=0
     for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
         if [ -n "$CREDENTIAL" ]; then
@@ -140,7 +119,7 @@ initialize () {
         exit 97
     fi
 
-    # Update php-fpm socket owner for cent8
+    # Set the php-fpm socket owner
     if [ -e /etc/php-fpm.d/www.conf ]; then
         mkdir -p /var/run/php-fpm
 
@@ -317,13 +296,15 @@ chk_remote_mysql () {
 
 # Apache service management
 start_http () {
-    if [[ -n $PHPFPM ]]; then
-        # this is for running under cent8
+
+    # CentOS 8 ships with php-fpm enabled, we need to start it
+    # Not tested on other distros please provide feedback
+    if [ -n "$PHPFPM" ]; then
         echo -n " * Starting php-fpm web service"
         $PHPFPM &> /dev/null
         RETVAL=$?
 
-        if [[ $RETVAL -eq 0 ]]; then
+        if [ "$RETVAL" -eq "0" ]; then
             echo "   ...done."
         else
             echo "   ...failed!"
