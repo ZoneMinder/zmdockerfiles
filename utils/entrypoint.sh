@@ -74,6 +74,13 @@ initialize () {
         fi
     done
 
+    # Do we have php-fpm installed
+    for FILE in "/usr/sbin/php-fpm"; do
+        if [ -f $FILE ]; then
+            PHPFPM=$FILE
+        fi
+    done
+
     for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do
         if [ -z $FILE ]; then
             echo
@@ -94,7 +101,7 @@ initialize () {
     done
 
     counter=0
-    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_NAME; do
+    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
         if [ -n "$CREDENTIAL" ]; then
             counter=$((counter+1))
         fi
@@ -110,6 +117,22 @@ initialize () {
     elif [ "$counter" -ne "0" ]; then
         echo " * Fatal: Remote database credentials not set correctly."
         exit 97
+    fi
+
+    # Set the php-fpm socket owner
+    if [ -e /etc/php-fpm.d/www.conf ]; then
+        mkdir -p /var/run/php-fpm
+
+        sed -E 's/^;(listen.(group|owner) = ).*/\1apache/g' /etc/php-fpm.d/www.conf | \
+            sed -E 's/^(listen\.acl_users.*)/;\1/' > /etc/php-fpm.d/www.conf.n
+
+        if [ $? -ne 0 ]; then
+            echo
+            echo " * Unable to update php-fpm file"
+            exit 95
+        fi
+
+        mv -f /etc/php-fpm.d/www.conf.n /etc/php-fpm.d/www.conf
     fi
 }
 
@@ -273,6 +296,22 @@ chk_remote_mysql () {
 
 # Apache service management
 start_http () {
+
+    # CentOS 8 ships with php-fpm enabled, we need to start it
+    # Not tested on other distros please provide feedback
+    if [ -n "$PHPFPM" ]; then
+        echo -n " * Starting php-fpm web service"
+        $PHPFPM &> /dev/null
+        RETVAL=$?
+
+        if [ "$RETVAL" -eq "0" ]; then
+            echo "   ...done."
+        else
+            echo "   ...failed!"
+            exit 1
+        fi
+    fi
+
     echo -n " * Starting Apache http web server service"
     # Debian requires we load the contents of envvars before we can start apache
     if [ -f /etc/apache2/envvars ]; then
@@ -284,6 +323,7 @@ start_http () {
         echo "   ...done."
     else
         echo "   ...failed!"
+        exit 1
     fi
 }
 
@@ -296,6 +336,7 @@ start_zoneminder () {
         echo "   ...done."
     else
         echo "   ...failed!"
+        exit 1
     fi
 }
 
@@ -329,6 +370,10 @@ fi
 chown -R mysql:mysql /var/lib/mysql/
 # Configure then start Mysql
 if [ "$remoteDB" -eq "1" ]; then
+    if [ -n "$ZM_DB_PASS_FILE" ]; then
+        ZM_DB_PASS=$(cat $ZM_DB_PASS_FILE)
+    fi
+
     sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
     sed -i -e "s/ZM_DB_USER=.*$/ZM_DB_USER=$ZM_DB_USER/g" $ZMCONF
     sed -i -e "s/ZM_DB_PASS=.*$/ZM_DB_PASS=$ZM_DB_PASS/g" $ZMCONF
@@ -355,10 +400,5 @@ start_http
 # Start ZoneMinder
 start_zoneminder
 
-# Stay in a loop to keep the container running
-while :
-do
-    # perhaps output some stuff here or check apache & mysql are still running
-    sleep 2
-done
-
+# tail logs while running
+tail -F /var/log/zoneminder/zm*.log
