@@ -13,8 +13,30 @@
 # Find ciritical files and perform sanity checks
 initialize () {
 
+    # check if remote db credentials have been given and set properly
+    counter=0
+    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
+        if [ -n "$CREDENTIAL" ]; then
+            counter=$((counter+1))
+        fi
+    done
+
+    # counter = 0 means a local database
+    # counter = 4 means a remote database
+    # counter != 0 or 4 means the credentials were not specified correctly and we should fail
+    remoteDB=0
+    serverbins="my_print_defaults mysqld_safe"
+    if [ "$counter" -eq "4" ]; then
+        echo " * Remote database credentials detected. Continuing..."
+        remoteDB=1
+        serverbins=""
+    elif [ "$counter" -ne "0" ]; then
+        echo " * Fatal: Remote database credentials not set correctly."
+        exit 97
+    fi
+
     # Check to see if this script has access to all the commands it needs
-    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysqlshow sed sleep su tail usermod head file; do
+    for CMD in cat grep install ln mysql mysqladmin mysqlshow sed sleep su tail usermod head file $serverbins; do
       type $CMD &> /dev/null
 
       if [ $? -ne 0 ]; then
@@ -99,25 +121,6 @@ initialize () {
             exit 98
         fi
     done
-
-    counter=0
-    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
-        if [ -n "$CREDENTIAL" ]; then
-            counter=$((counter+1))
-        fi
-    done
-
-    # counter = 0 means a local database
-    # counter = 4 means a remote database
-    # counter != 0 or 4 means the credentials were not specified correctly and we should fail
-    remoteDB=0
-    if [ "$counter" -eq "4" ]; then
-        echo " * Remote database credentials detected. Continuing..."
-        remoteDB=1
-    elif [ "$counter" -ne "0" ]; then
-        echo " * Fatal: Remote database credentials not set correctly."
-        exit 97
-    fi
 
     # Set the php-fpm socket owner
     if [ -e /etc/php-fpm.d/www.conf ]; then
@@ -367,7 +370,10 @@ if [ -f /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
-chown -R mysql:mysql /var/lib/mysql/
+if [ -d "/var/lib/mysql" ]; then
+  chown -R mysql:mysql /var/lib/mysql/
+fi
+
 # Configure then start Mysql
 if [ "$remoteDB" -eq "1" ]; then
     if [ -n "$ZM_DB_PASS_FILE" ]; then
