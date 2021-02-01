@@ -13,8 +13,30 @@
 # Find ciritical files and perform sanity checks
 initialize () {
 
+    # check if remote db credentials have been given and set properly
+    counter=0
+    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_PASS_FILE $ZM_DB_NAME; do
+        if [ -n "$CREDENTIAL" ]; then
+            counter=$((counter+1))
+        fi
+    done
+
+    # counter = 0 means a local database
+    # counter = 4 means a remote database
+    # counter != 0 or 4 means the credentials were not specified correctly and we should fail
+    remoteDB=0
+    serverbins="my_print_defaults mysqld_safe"
+    if [ "$counter" -eq "4" ]; then
+        echo " * Remote database credentials detected. Continuing..."
+        remoteDB=1
+        serverbins=""
+    elif [ "$counter" -ne "0" ]; then
+        echo " * Fatal: Remote database credentials not set correctly."
+        exit 97
+    fi
+
     # Check to see if this script has access to all the commands it needs
-    for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe mysqlshow sed sleep su tail usermod head file; do
+    for CMD in cat grep install ln mysql mysqladmin mysqlshow sed sleep su tail usermod head file $serverbins; do
       type $CMD &> /dev/null
 
       if [ $? -ne 0 ]; then
@@ -74,6 +96,13 @@ initialize () {
         fi
     done
 
+    # Do we have php-fpm installed
+    for FILE in "/usr/sbin/php-fpm"; do
+        if [ -f $FILE ]; then
+            PHPFPM=$FILE
+        fi
+    done
+
     for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do
         if [ -z $FILE ]; then
             echo
@@ -93,23 +122,20 @@ initialize () {
         fi
     done
 
-    counter=0
-    for CREDENTIAL in $ZM_DB_HOST $ZM_DB_USER $ZM_DB_PASS $ZM_DB_NAME; do
-        if [ -n "$CREDENTIAL" ]; then
-            counter=$((counter+1))
-        fi
-    done
+    # Set the php-fpm socket owner
+    if [ -e /etc/php-fpm.d/www.conf ]; then
+        mkdir -p /var/run/php-fpm
 
-    # counter = 0 means a local database
-    # counter = 4 means a remote database
-    # counter != 0 or 4 means the credentials were not specified correctly and we should fail
-    remoteDB=0
-    if [ "$counter" -eq "4" ]; then
-        echo " * Remote database credentials detected. Continuing..."
-        remoteDB=1
-    elif [ "$counter" -ne "0" ]; then
-        echo " * Fatal: Remote database credentials not set correctly."
-        exit 97
+        sed -E 's/^;(listen.(group|owner) = ).*/\1apache/g' /etc/php-fpm.d/www.conf | \
+            sed -E 's/^(listen\.acl_users.*)/;\1/' > /etc/php-fpm.d/www.conf.n
+
+        if [ $? -ne 0 ]; then
+            echo
+            echo " * Unable to update php-fpm file"
+            exit 95
+        fi
+
+        mv -f /etc/php-fpm.d/www.conf.n /etc/php-fpm.d/www.conf
     fi
 }
 
@@ -273,6 +299,22 @@ chk_remote_mysql () {
 
 # Apache service management
 start_http () {
+
+    # CentOS 8 ships with php-fpm enabled, we need to start it
+    # Not tested on other distros please provide feedback
+    if [ -n "$PHPFPM" ]; then
+        echo -n " * Starting php-fpm web service"
+        $PHPFPM &> /dev/null
+        RETVAL=$?
+
+        if [ "$RETVAL" -eq "0" ]; then
+            echo "   ...done."
+        else
+            echo "   ...failed!"
+            exit 1
+        fi
+    fi
+
     echo -n " * Starting Apache http web server service"
     # Debian requires we load the contents of envvars before we can start apache
     if [ -f /etc/apache2/envvars ]; then
@@ -284,6 +326,7 @@ start_http () {
         echo "   ...done."
     else
         echo "   ...failed!"
+        exit 1
     fi
 }
 
@@ -296,6 +339,7 @@ start_zoneminder () {
         echo "   ...done."
     else
         echo "   ...failed!"
+        exit 1
     fi
 }
 
@@ -326,9 +370,16 @@ if [ -f /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
-chown -R mysql:mysql /var/lib/mysql/
+if [ -d "/var/lib/mysql" ]; then
+  chown -R mysql:mysql /var/lib/mysql/
+fi
+
 # Configure then start Mysql
 if [ "$remoteDB" -eq "1" ]; then
+    if [ -n "$ZM_DB_PASS_FILE" ]; then
+        ZM_DB_PASS=$(cat $ZM_DB_PASS_FILE)
+    fi
+
     sed -i -e "s/ZM_DB_NAME=.*$/ZM_DB_NAME=$ZM_DB_NAME/g" $ZMCONF
     sed -i -e "s/ZM_DB_USER=.*$/ZM_DB_USER=$ZM_DB_USER/g" $ZMCONF
     sed -i -e "s/ZM_DB_PASS=.*$/ZM_DB_PASS=$ZM_DB_PASS/g" $ZMCONF
@@ -355,10 +406,5 @@ start_http
 # Start ZoneMinder
 start_zoneminder
 
-# Stay in a loop to keep the container running
-while :
-do
-    # perhaps output some stuff here or check apache & mysql are still running
-    sleep 2
-done
-
+# tail logs while running
+tail -F /var/log/zoneminder/zm*.log
