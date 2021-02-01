@@ -62,7 +62,8 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get install -y \
     libhttp-lite-perl libidn11 libidn2-0-dev libidn2-dev libiec61883-0 \
     libjack-jackd2-0 libjbig0 libjpeg-turbo8 libjpeg-turbo8-dev libjpeg8 \
     libjpeg8-dev libjs-jquery libjs-mootools libjs-sphinxdoc libjs-underscore \
-    libldap2-dev libllvm8 libmp3lame0 libmp4v2-2 libmp4v2-dev libmpg123-0 \
+    libjwt0 libjwt-dev liblivemedia-dev libusageenvironment3 libbasicusageenvironment1 \
+    libldap2-dev libllvm8 libmp3lame0 libmpg123-0 \
     libmysofa0 libmysqlclient-dev libmysqlclient20 libnorm1 libnuma1 libogg0 \
     libopenal-data libopenal1 libopenjp2-7 libopenmpt0 libopus0 libp11-kit-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparams-classify-perl \
