@@ -70,7 +70,8 @@ RUN apt-get update && apt-get install -y \
     libidn11 libidn2-0-dev libidn2-dev libiec61883-0 libjack-jackd2-0 libjbig0 \
     libjpeg-turbo8 libjpeg-turbo8-dev libjs-jquery \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
-    libldap2-dev libllvm7 libmp3lame0 libmp4v2-2 libmp4v2-dev libmpg123-0 \
+    libjwt0 libjwt-dev libbasicusageenvironment1 libusageenvironment3 liblivemedia77 liblivemedia-dev \
+    libldap2-dev libllvm7 libmp3lame0 libmpg123-0 \
     libmysofa1 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
     libopenal-data libopenal1 libopenjp2-7 libopenmpt0 libopus0 libp11-kit-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparams-classify-perl \
