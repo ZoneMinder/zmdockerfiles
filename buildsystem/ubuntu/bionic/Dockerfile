@@ -70,7 +70,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get install -y \
     libpgm-5.2-0 libphp-serialization-perl libpixman-1-0 libpng16-16 \
     libpolkit-agent-1-0 libpolkit-gobject-1-0 libpolkit-gobject-1-dev \
     libpostproc-dev libpostproc54 libpulse0 libpython-stdlib \
-    libpython2.7-minimal libpython2.7-stdlib libraw1394-11 librsvg2-2 \
+    libraw1394-11 librsvg2-2 \
     librubberband2 libsamplerate0 libsctp-dev libsctp1 libsdl2-2.0-0 libsensors4 \
     libshine3 libslang2 libsnappy1v5 libsndfile1 libsndio6.1 libsodium23 \
     libsoxr0 libspeex1 libssh-gcrypt-4 libssl-dev libswresample-dev \
@@ -89,8 +89,8 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get install -y \
     python python-alabaster python-babel python-babel-localedata python-certifi \
     python-chardet python-docutils python-idna python-imagesize python-jinja2 \
     python-markupsafe python-minimal python-pkg-resources python-pygments \
-    python-requests python-roman python-six python-sphinx python-typing \
-    python-tz python-urllib3 python2.7 python2.7-minimal python3-distutils \
+    python-requests python-roman python-six python3-sphinx python-typing \
+    python-tz python-urllib3 python3-distutils \
     python3-lib2to3 sgml-base shared-mime-info sphinx-common tzdata uuid-dev \
     x11-common xkb-data xml-core zlib1g-dev
 
