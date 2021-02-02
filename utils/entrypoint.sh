@@ -388,7 +388,10 @@ if [ "$remoteDB" -eq "1" ]; then
 else
     usermod -d /var/lib/mysql/ mysql > /dev/null 2>&1
     start_mysql
-    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"
+
+    mysql -u root -e "CREATE USER 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost';"
+
     if [ "$(zm_db_exists)" -eq "0" ]; then
         echo " * First run of mysql in the container, creating ZoneMinder dB."
         mysql -u root < $ZMCREATE
