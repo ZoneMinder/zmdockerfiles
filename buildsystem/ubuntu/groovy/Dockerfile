@@ -53,11 +53,11 @@ RUN apt-get update && apt-get install -y \
     libavdevice58 libavfilter-dev libavfilter7 libavformat-dev libavformat58 \
     libswresample-dev libswresample3 libavutil-dev libavutil56 \
     libb-hooks-op-check-perl libbluray2 libbs2b0 libbz2-1.0 libbz2-dev libcaca0 \
-    libcairo2 libcdio-cdda2 libcdio-paranoia2 libcdio18 libchromaprint1 \
+    libcairo2 libcdio-cdda2 libcdio-paranoia2 libcdio19 libchromaprint1 \
     libclass-mix-perl libcrypt-eksblowfish-perl libcrypt-rijndael-perl \
     libcrystalhd3 libcurl3-gnutls libcurl4-gnutls-dev libdata-entropy-perl \
     libdata-float-perl libdata-uuid-perl libdate-manip-perl libdatrie1 \
-    libdbd-mysql-perl libdbi-perl libdc1394-22 libdevel-callchecker-perl \
+    libdbd-mysql-perl libdbi-perl libdc1394-25 libdevel-callchecker-perl \
     libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 \
     libdrm2 libdynaloader-functions-perl libedit2 libexpat1 \
     libexpat1-dev libfftw3-double3 libflac8 libflite1 libfontconfig1 \
@@ -71,7 +71,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-turbo8 libjpeg-turbo8-dev libjs-jquery \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
     libjwt0 libjwt-dev libbasicusageenvironment1 libusageenvironment3 liblivemedia77 liblivemedia-dev \
-    libldap2-dev libllvm7 libmp3lame0 libmpg123-0 \
+    libldap2-dev libllvm11 libmp3lame0 libmpg123-0 \
     libmysofa1 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
     libopenal-data libopenal1 libopenjp2-7 libopenmpt0 libopus0 libp11-kit-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparams-classify-perl \
@@ -89,17 +89,17 @@ RUN apt-get update && apt-get install -y \
     libva-drm2 libva-x11-2 libva2 libvdpau1 libvlc-dev libvlc5 libvlccore9 \
     libvorbis0a libvorbisenc2 libvorbisfile3 libvpx6 libwavpack1 \
     libwayland-client0 libwayland-cursor0 libwayland-egl1 libwebp6 libwebpmux3 \
-    libwrap0 libx11-6 libx11-data libx11-xcb1 libx264-155 libx264-dev \
-    libx265-179 libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 \
+    libwrap0 libx11-6 libx11-data libx11-xcb1 \
+    libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 \
     libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb1 \
     libxcursor1 libxdamage1 libxdmcp6 libxext6 libxfixes3 libxi6 libxinerama1 \
     libxkbcommon0 libxrandr2 libxrender1 libxshmfence1 libxss1 libxv1 \
     libxvidcore4 libxxf86vm1 libzmq5 libzvbi-common libzvbi0 mysql-common \
-    net-tools nettle-dev pkg-config python python-alabaster python-babel \
-    python-babel-localedata python-certifi python-chardet python-docutils \
-    python-idna python-imagesize python-jinja2 python-markupsafe \
-    python-pkg-resources python-pygments python-roman python-six \
-    sphinx-doc python3-sphinx python-typing python-tz \
+    net-tools nettle-dev pkg-config python3 python3-alabaster python3-babel \
+    python3-babel-localedata python-certifi python3-chardet python3-docutils \
+    python3-idna python3-imagesize python3-jinja2 python3-markupsafe \
+    python-pkg-resources python3-pygments python3-roman python3-six \
+    sphinx-doc python3-sphinx python3-typing python3-tz \
     python3-distutils python3-lib2to3 sgml-base \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
     zlib1g-dev \
