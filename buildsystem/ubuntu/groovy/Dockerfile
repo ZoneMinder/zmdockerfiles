@@ -96,10 +96,10 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 libxrandr2 libxrender1 libxshmfence1 libxss1 libxv1 \
     libxvidcore4 libxxf86vm1 libzmq5 libzvbi-common libzvbi0 mysql-common \
     net-tools nettle-dev pkg-config python3 python3-alabaster python3-babel \
-    python3-babel-localedata python-certifi python3-chardet python3-docutils \
+    python3-babel-localedata python3-certifi python3-chardet python3-docutils \
     python3-idna python3-imagesize python3-jinja2 python3-markupsafe \
     python-pkg-resources python3-pygments python3-roman python3-six \
-    sphinx-doc python3-sphinx python3-typing python3-tz \
+    sphinx-doc python3-sphinx python3-tz \
     python3-distutils python3-lib2to3 sgml-base \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
     zlib1g-dev \
