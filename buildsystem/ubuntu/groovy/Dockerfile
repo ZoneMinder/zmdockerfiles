@@ -68,7 +68,7 @@ RUN apt-get update && apt-get install -y \
     libgnutls-openssl27 libgnutls28-dev libgnutls30 libgnutlsxx28 \
     libgpg-error-dev libgraphite2-3 libgsm1 libharfbuzz0b libhttp-lite-perl \
     libidn11 libidn2-0-dev libidn2-dev libiec61883-0 libjack-jackd2-0 libjbig0 \
-    libjpeg-turbo8 libjpeg-turbo8-dev libjs-jquery \
+    libjpeg-turbo8 libjpeg-turbo8-dev \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
     libjwt0 libjwt-dev libbasicusageenvironment1 libusageenvironment3 liblivemedia77 liblivemedia-dev \
     libldap2-dev libllvm11 libmp3lame0 libmpg123-0 \
