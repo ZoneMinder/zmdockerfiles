@@ -10,7 +10,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Don't install recommends
 RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
 
-RUN apt-get update && apt-get install -y \
+RUN apt install gpgv 
+
+RUN apt update && apt install -y \
     apt-transport-https \
     curl \
     wget \
@@ -20,13 +22,6 @@ RUN apt-get update && apt-get install -y \
 #RUN echo "deb https://zmrepo.zoneminder.com/debian/master groovy/" >> /etc/apt/sources.list
 
 #RUN wget -O - https://zmrepo.zoneminder.com/debian/archive-keyring.gpg | apt-key add -
-
-RUN apt-get update && apt-get install -y \
-    apt-transport-https \
-    curl \
-    wget \
-    gnupg \
-    ca-certificates
 
 # Install base toolset
 RUN apt-get update && apt-get install -y \
