@@ -79,6 +79,14 @@ initialize () {
         fi
     done
 
+    # Look in common places for the zoneminder dB update perl script - zmupdate.pl
+    for FILE in "/usr/bin/zmupdate.pl" "/usr/local/bin/zmupdate.pl"; do
+        if [ -f $FILE ]; then
+            ZMUPDATE=$FILE
+            break
+        fi
+    done
+
     # Look in common places for the zoneminder dB creation script - zm_create.sql
     for FILE in "/usr/share/zoneminder/db/zm_create.sql" "/usr/local/share/zoneminder/db/zm_create.sql"; do
         if [ -f $FILE ]; then
@@ -89,7 +97,7 @@ initialize () {
 
     # Look in common places for the php.ini relevant to zoneminder
     # Search order matters here because debian distros commonly have multiple php.ini's
-    for FILE in "/etc/php/7.2/apache2/php.ini" "/etc/php/7.0/apache2/php.ini" "/etc/php5/apache2/php.ini" "/etc/php.ini" "/usr/local/etc/php.ini"; do
+    for FILE in "/etc/php/7.4/apache2/php.ini" "/etc/php/7.2/apache2/php.ini" "/etc/php/7.0/apache2/php.ini" "/etc/php5/apache2/php.ini" "/etc/php.ini" "/usr/local/etc/php.ini"; do
         if [ -f $FILE ]; then
             PHPINI=$FILE
             break
@@ -103,7 +111,7 @@ initialize () {
         fi
     done
 
-    for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do
+    for FILE in $ZMCONF $ZMPKG $ZMUPDATE $ZMCREATE $PHPINI $HTTPBIN $MYSQLD; do
         if [ -z $FILE ]; then
             echo
             echo "FATAL: This script was unable to determine one or more critical files. Cannot continue."
@@ -113,6 +121,7 @@ initialize () {
             echo
             echo "Path to zm.conf: ${ZMCONF}"
             echo "Path to zmpkg.pl: ${ZMPKG}"
+            echo "Path to zmupdate.pl: ${ZMUPDATE}"
             echo "Path to zm_create.sql: ${ZMCREATE}"
             echo "Path to php.ini: ${PHPINI}"
             echo "Path to Apache executable: ${HTTPBIN}"
@@ -333,6 +342,11 @@ start_http () {
 # ZoneMinder service management
 start_zoneminder () {
     echo -n " * Starting ZoneMinder video surveillance recorder"
+    # Call zmupdate.pl here to upgrade the dB if needed. 
+    # Otherwise zm fails after an upgrade, due to dB mismatch
+    $ZMUPDATE --nointeractive
+    $ZMUPDATE --nointeractive -f
+
     $ZMPKG start > /dev/null 2>&1
     RETVAL=$?
     if [ "$RETVAL" = "0" ]; then
