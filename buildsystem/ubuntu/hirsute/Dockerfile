@@ -10,9 +10,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Don't install recommends
 RUN echo 'apt::install-recommends "false";' > /etc/apt/apt.conf.d/00recommends
 
-RUN apt-get install -y gpgv
+RUN apt-get install --reinstall -y gpgv gnupg
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update 
+
+RUN apt-get install -y \
     apt-transport-https \
     curl \
     wget \
