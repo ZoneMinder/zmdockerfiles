@@ -36,7 +36,6 @@ RUN apt-get update && apt-get install -y \
     equivs \
     rpm \
     alien \
-    dh-systemd \
     libdistro-info-perl \
     apache2-dev bzip2 dh-linktree docutils-common \
     ffmpeg fontconfig fontconfig-config fonts-dejavu-core gir1.2-polkit-1.0 \
@@ -60,15 +59,15 @@ RUN apt-get update && apt-get install -y \
     libgnutls-openssl27 libgnutls28-dev libgnutls30 libgnutlsxx28 \
     libgpg-error-dev libgraphite2-3 libgsm1 libharfbuzz0b libhttp-lite-perl \
     libidn11 libidn2-0-dev libidn2-dev libiec61883-0 libjack-jackd2-0 libjbig0 \
-    libjpeg-turbo8 libjpeg-turbo8-dev \
+    libturbojpeg0 libturbojpeg0-dev \
     libjs-mootools libjs-sphinxdoc libjs-underscore libldap-2.4-2 libldap-common  \
-    libjwt0 libjwt-dev libbasicusageenvironment1 libusageenvironment3 liblivemedia77 liblivemedia-dev \
+    libjwt0 libjwt-dev \
     libldap2-dev libllvm11 libmp3lame0 libmpg123-0 \
     libmysofa1 libmariadb-dev-compat libmariadb3 libnorm1 libnuma1 libogg0 \
     libopenal-data libopenal1 libopenjp2-7 libopenmpt0 libopus0 libp11-kit-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparams-classify-perl \
     libpciaccess0 libpcre16-3 libpcre3-dev libpcre32-3 libpcrecpp0v5 \
-    libpgm-5.2-0 libphp-serialization-perl libpixman-1-0 libpng16-16 \
+    libpgm-5.3-0 libphp-serialization-perl libpixman-1-0 libpng16-16 \
     libpolkit-agent-1-0 libpolkit-gobject-1-0 libpolkit-gobject-1-dev \
     libpostproc-dev libpostproc55 libpulse0 libpython2-stdlib \
     libraw1394-11 librsvg2-2 \
