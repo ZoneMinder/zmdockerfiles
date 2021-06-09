@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
     libb-hooks-op-check-perl libbluray2 libbs2b0 libbz2-1.0 libbz2-dev libcaca0 \
     libcairo2 libcdio-cdda2 libcdio-paranoia2 libcdio19 libchromaprint1 \
     libclass-mix-perl libcrypt-eksblowfish-perl libcrypt-rijndael-perl \
-    libcrystalhd3 libcurl3-gnutls libcurl4-gnutls-dev libdata-entropy-perl \
+    libcurl4-gnutls-dev libdata-entropy-perl \
     libdata-float-perl libdata-uuid-perl libdate-manip-perl libdatrie1 \
     libdbd-mysql-perl libdbi-perl libdc1394-25 libdevel-callchecker-perl \
     libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 \
