@@ -424,4 +424,4 @@ start_http
 start_zoneminder
 
 # tail logs while running
-tail -F /var/log/zoneminder/zm*.log
+tail -F /var/log/zoneminder/zm*.log /var/log/zm/zm*.log
