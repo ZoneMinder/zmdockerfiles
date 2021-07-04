@@ -14,6 +14,8 @@ RUN \
   && dnf -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
   # Install dependencies
   && dnf -y install mariadb-server mod_ssl zip file \
+  # Install support for hardware accelerator decoder devices
+  && dnf -y install mesa-dri-drivers libva-intel-driver \
   # Clean up dnf cache
   && dnf clean all \
   # Make sure the entrypoint is executable
