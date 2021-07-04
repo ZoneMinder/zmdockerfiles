@@ -49,6 +49,15 @@ docker run -d -t -p 1080:80 \
     zoneminderhq/zoneminder:latest-ubuntu18.04
 ```
 
+Example for passing a host device to the container (for hardware acceleration via DecoderHWAccelName/DecoderHWAccelDevice):
+
+```bash
+docker run [...] \
+    [...]
+    --device /dev/dri \
+    [...]
+```
+
 ## Contributions
 
 Contributions are welcome, but please follow instructions under each subfolder:
