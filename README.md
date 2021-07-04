@@ -7,7 +7,7 @@ This repository contains Docker files used in various ways for the ZoneMinder pr
 
 Docker images are published to Docker Hub and can be pulled directly from there e.g.
 
-### CentOS
+### CentOS and Rocky
 
 Using external folders:
 ```bash

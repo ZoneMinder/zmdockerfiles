@@ -1,4 +1,4 @@
-FROM centos:8
+FROM rockylinux/rockylinux:8
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
 # Fix dnf best candidate failures
@@ -12,10 +12,10 @@ RUN dnf -y install wget dnf-utils
 RUN dnf -y install epel-release
 # added PowerTools as suggested at:
 #   https://fedoraproject.org/wiki/EPEL
-RUN dnf config-manager --set-enabled PowerTools
+RUN dnf config-manager --set-enabled powertools
 
 # Repository for building/testing dependencies that are not present in vanilla
-# CentOS and PowerTools / EPEL repositories, e.g. some Python 2 packages
+# Rocky Linux and PowerTools / EPEL repositories, e.g. some Python 2 packages
 # - fix missing locales
 ENV LC_ALL="C" LANG="en_US.UTF-8"
 # - install the backport repository
