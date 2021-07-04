@@ -309,7 +309,7 @@ chk_remote_mysql () {
 # Apache service management
 start_http () {
 
-    # CentOS 8 ships with php-fpm enabled, we need to start it
+    # CentOS/Rocky 8 ships with php-fpm enabled, we need to start it
     # Not tested on other distros please provide feedback
     if [ -n "$PHPFPM" ]; then
         echo -n " * Starting php-fpm web service"
