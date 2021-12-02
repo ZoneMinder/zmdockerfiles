@@ -47,7 +47,7 @@ services:
     shm_size: "512mb"
     privileged: false
     environment:
-      - TZ=Asia/Tbilisi
+      - TZ=<your_time_zone_here>
       - PUID=99
       - PGID=100
       - MULTI_PORT_START=0
@@ -78,6 +78,6 @@ docker-compose up -d
 ```
 
 ### Connect
-http://<your ip or hostname>/zm
+`http://<your ip or hostname>/zm`
 
 
