@@ -34,6 +34,6 @@ jobs:
         with:
           context: .
           file: ${{ env.DOCKERFILE_PATH }}
-          platforms: linux/amd64,linux/arm64,linux/armv7
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REPO }}:${{ env.TAG }}
