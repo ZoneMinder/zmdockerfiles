@@ -1,14 +1,14 @@
 name: docker-build-and-push
 
 env:
-  tag: ubuntu-impish                                      # Change me based on image
-  image: hardenrm/packpack                                  # Make sure this matches the DockerHub Repo you're pushing to
-  dockerfile: buildsystem/ubuntu/impish/Dockerfile        # Change me based on image
+  TAG: ubuntu-impish                                      # Change me based on image
+  IMAGE: hardenrm/packpack                                  # Make sure this matches the DockerHub Repo you're pushing to
+  DOCKERFILE_PATH: buildsystem/ubuntu/impish/Dockerfile        # Change me based on image
 
 on:
   push:
     paths:
-      - $dockerfile
+      - $DOCKERFILE_PATH
 
 jobs:
   ubuntu-impish:                                          # Change me based on image
@@ -21,7 +21,7 @@ jobs:
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
-          images: $image
+          images: $IMAGE
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: $dockerfile
+          file: $DOCKERFILE_PATH
           platforms: linux/armv7,linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: $tag
+          tags: $TAG
