@@ -99,6 +99,6 @@ RUN apt-get update && apt-get install -y \
     libgnutls30 libldap-2.4-2 libpcre3 libssl1.1 shared-mime-info
 
 # Add this comment, so the file is changed, which should trigger a Docker Build using GHA
-# 6
+# 7
 # Enable sudo without password
 RUN echo '%adm ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
