@@ -97,5 +97,6 @@ RUN apt-get update && apt-get install -y \
     bzip2 libbz2-1.0 libcurl3-gnutls libexpat1 libglib2.0-0 libglib2.0-data \
     libgnutls30 libssl1.1 shared-mime-info
 
+# comment to cause action 
 # Enable sudo without password
 RUN echo '%adm ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
