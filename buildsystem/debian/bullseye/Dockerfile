@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y \
     libcurl4-gnutls-dev libdata-entropy-perl \
     libdata-float-perl libdata-uuid-perl libdate-manip-perl libdatrie1 \
     libdbd-mysql-perl libdbi-perl libdc1394-25 libdevel-callchecker-perl \
-    libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 \
+    libdrm-common \
     libdrm2 libdynaloader-functions-perl libedit2 libexpat1 \
     libexpat1-dev libfftw3-double3 libflac8 libflite1 libfontconfig1 \
     libfreetype6 libfribidi0 libgcrypt20-dev libgdk-pixbuf2.0-0 \
