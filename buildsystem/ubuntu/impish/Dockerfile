@@ -95,7 +95,7 @@ RUN apt-get update && apt-get install -y \
     shared-mime-info sphinx-common tzdata uuid-dev x11-common xkb-data xml-core \
     zlib1g-dev \
     bzip2 libbz2-1.0 libcurl3-gnutls libexpat1 libglib2.0-0 libglib2.0-data \
-    libgnutls30 libldap-2.4-2 libpcre3 libssl1.1 shared-mime-info
+    libgnutls30 libssl1.1 shared-mime-info
 
 # Enable sudo without password
 RUN echo '%adm ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
