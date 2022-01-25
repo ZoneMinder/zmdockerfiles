@@ -8,7 +8,7 @@ env:
 on:
   push:
     paths:
-      - $DOCKERFILE_PATH
+      - ${{ env.DOCKERFILE_PATH }}
 
 jobs:
   ubuntu-impish:                                          # Change me based on image
@@ -21,7 +21,7 @@ jobs:
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
-          images: $IMAGE
+          images: ${{ env.IMAGE }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: $DOCKERFILE_PATH
+          file: ${{ env.DOCKERFILE_PATH }}
           platforms: linux/armv7,linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: $TAG
+          tags: ${{ env.TAG }}
