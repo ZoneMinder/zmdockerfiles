@@ -37,3 +37,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REPO }}:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
