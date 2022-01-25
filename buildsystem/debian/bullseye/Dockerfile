@@ -99,3 +99,4 @@ RUN apt-get update && apt-get install -y \
 
 # Enable sudo without password
 RUN echo '%adm ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+#commend to force build
