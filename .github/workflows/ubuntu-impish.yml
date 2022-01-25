@@ -8,7 +8,7 @@ env:
 on:
   push:
     paths:
-      - 'buildsystem/ubuntu/impish/Dockerfile'
+      - 'buildsystem/ubuntu/impish/Dockerfile'            # Change me based on image
 
 jobs:
   ubuntu-impish:                                          # Change me based on image
