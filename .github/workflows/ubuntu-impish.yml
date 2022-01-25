@@ -21,7 +21,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO }}
+          images: hardenrm/packpack                       # Make sure this matches the DockerHub Repo you're pushing to
           tags: |
             type=raw,${{ env.tag }}
 
