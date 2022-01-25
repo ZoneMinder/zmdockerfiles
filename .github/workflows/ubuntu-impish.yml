@@ -21,7 +21,7 @@ jobs:
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
-          images: $IMAGE
+          images: ${{ env.IMAGE }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -42,4 +42,4 @@ jobs:
           file: ${{ env.DOCKERFILE_PATH }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: $TAG
+          tags: ${{ env.TAG }}
