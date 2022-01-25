@@ -2,7 +2,7 @@ name: docker-build-and-push
 
 env:
   TAG: ubuntu-impish                                      # Change me based on image
-  IMAGE: hardenrm/packpack                                  # Make sure this matches the DockerHub Repo you're pushing to
+  REPO: packpack                                  # Make sure this matches the DockerHub Repo you're pushing to
   DOCKERFILE_PATH: buildsystem/ubuntu/impish/Dockerfile        # Change me based on image
 
 on:
@@ -21,9 +21,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/packpack
+          images: hardenrm/packpack                       # Make sure this matches the DockerHub Repo you're pushing to
           tags: |
-            type=raw,ubuntu-impish
+            type=raw,${{ env.tag }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
