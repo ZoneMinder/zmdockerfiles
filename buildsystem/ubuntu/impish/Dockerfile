@@ -97,7 +97,5 @@ RUN apt-get update && apt-get install -y \
     bzip2 libbz2-1.0 libcurl3-gnutls libexpat1 libglib2.0-0 libglib2.0-data \
     libgnutls30 libssl1.1 shared-mime-info
 
-# Add this comment, so the file is changed, which should trigger a Docker Build using GHA
-# 11
 # Enable sudo without password
 RUN echo '%adm ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
