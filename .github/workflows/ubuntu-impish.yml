@@ -18,10 +18,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        id: meta
+        uses: docker/metadata-action@v3
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/packpack
+          tags: |
+            type=raw,ubuntu-impish
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
