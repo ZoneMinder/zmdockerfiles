@@ -1,4 +1,4 @@
-FROM centos:8
+FROM rockylinux/rockylinux:8
 MAINTAINER Andrew Bauer <zonexpertconsulting@outlook.com>
 
 # Get the entrypoint script
@@ -8,7 +8,7 @@ ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entr
 RUN \
   # Enable PowerTools repository to reach all required dependencies
   dnf -y install 'dnf-command(config-manager)' && dnf config-manager --set-enabled powertools \
-  # Enable the EPEL repo. The repo package is part of centos base so no need fetch it.
+  # Enable the EPEL repo. The repo package is part of Rocky base so no need fetch it.
   && dnf -y install epel-release \
   # Fetch and enable the RPMFusion repo
   && dnf -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
