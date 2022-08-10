@@ -17,10 +17,6 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     ca-certificates
 
-RUN echo "deb https://zmrepo.zoneminder.com/debian/master focal/" >> /etc/apt/sources.list
-
-RUN wget -O - https://zmrepo.zoneminder.com/debian/archive-keyring.gpg | apt-key add -
-
 RUN apt-get update && apt-get install -y \
     apt-transport-https \
     curl \
