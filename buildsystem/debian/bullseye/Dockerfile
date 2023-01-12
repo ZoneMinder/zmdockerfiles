@@ -21,7 +21,7 @@ RUN apt-get install -y \
     ca-certificates
 
 # Install base toolset
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     sudo \
     git \
     build-essential \
