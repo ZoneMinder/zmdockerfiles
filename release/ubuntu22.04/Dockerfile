@@ -14,7 +14,8 @@ RUN add-apt-repository ppa:iconnor/zoneminder-1.36 \
 # Install zoneminder
 RUN DEBIAN_FRONTEND=noninteractive apt install --assume-yes zoneminder \
     && a2enconf zoneminder \
-    && a2enmod rewrite cgi
+    && a2enmod rewrite cgi \
+    && service apache2 restart
 
 # Setup Volumes
 VOLUME /var/cache/zoneminder/events /var/cache/zoneminder/images /var/lib/mysql /var/log/zm
