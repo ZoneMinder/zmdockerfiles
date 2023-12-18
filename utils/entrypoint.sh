@@ -357,6 +357,11 @@ start_zoneminder () {
     fi
 }
 
+correct_permission () {
+    # warn log: Cannot write to event folder /var/cache/zoneminder/events. Check that it exists and is owned by the web account user.
+    chown -R www-data:www-data /var/cache/zoneminder/events /var/cache/zoneminder/images /var/log/zm
+}
+
 cleanup () {
     echo " * SIGTERM received. Cleaning up before exiting..."
     kill $mysqlpid > /dev/null 2>&1
@@ -422,6 +427,9 @@ start_http
 
 # Start ZoneMinder
 start_zoneminder
+
+# Update permission
+correct_permission
 
 # tail logs while running
 tail -F /var/log/zoneminder/zm*.log /var/log/zm/zm*.log
