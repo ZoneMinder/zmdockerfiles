@@ -15,7 +15,7 @@ services:
             - events:/var/cache/zoneminder/events
             - images:/var/cache/zoneminder/images
             - mysql:/var/lib/mysql
-            - logs:/var/log/zoneminder
+            - logs:/var/log/zm
 volumes:
   events:
   images:
