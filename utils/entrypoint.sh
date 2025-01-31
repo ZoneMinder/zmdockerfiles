@@ -357,6 +357,11 @@ start_zoneminder () {
     fi
 }
 
+correct_permission () {
+    # warn log: Cannot write to event folder /var/cache/zoneminder/events. Check that it exists and is owned by the web account user.
+    chown -R www-data:www-data /var/cache/zoneminder/events /var/cache/zoneminder/images /var/log/zm
+}
+
 cleanup () {
     echo " * SIGTERM received. Cleaning up before exiting..."
     kill $mysqlpid > /dev/null 2>&1
@@ -405,6 +410,7 @@ else
 
     mysql -u root -e "CREATE USER 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"
     mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost';"
+    mysql -u root -e "ALTER USER 'zmuser'@'localhost' IDENTIFIED WITH mysql_native_password BY 'zmpass';"
 
     if [ "$(zm_db_exists)" -eq "0" ]; then
         echo " * First run of mysql in the container, creating ZoneMinder dB."
@@ -412,6 +418,9 @@ else
     else
         echo " * ZoneMinder dB already exists, skipping table creation."
     fi
+
+    # This fix connection failed for tcp connection to mysql 
+    sed -i -e "s/ZM_DB_HOST=.*$/ZM_DB_HOST=127.0.0.1/g" $ZMCONF
 fi
 
 # Ensure we shutdown our services cleanly when we are told to stop
@@ -422,6 +431,9 @@ start_http
 
 # Start ZoneMinder
 start_zoneminder
+
+# Update permission
+correct_permission
 
 # tail logs while running
 tail -F /var/log/zoneminder/zm*.log /var/log/zm/zm*.log
