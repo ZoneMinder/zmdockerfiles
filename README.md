@@ -127,6 +127,12 @@ ZoneMinder container environment:
 | `ZM_ES_ENABLE` | `1` in `-es` images | Writes OPT_USE_EVENTNOTIFICATION to `conf.d`, which takes priority over the UI setting |
 | `ZM_DB_WAIT_TIMEOUT` | `180` | Seconds to wait for the database |
 | `NO_START_ZM` | `0` | `1` starts Apache and the database checks but not ZoneMinder, for debugging |
+| `PUID` / `PGID` | `33` / `33` | Run ZoneMinder, Apache and go2rtc as this user and group. See below. |
+| `SMTP_HOST` | | Mail server. Setting it writes `/etc/msmtprc`. See below. |
+| `SMTP_PORT` | `587` | |
+| `SMTP_TLS` | `starttls`, or `tls` on port 465 | `starttls`, `tls` or `off` |
+| `SMTP_USER` / `SMTP_PASS` / `SMTP_PASS_FILE` | | Login. Leave `SMTP_USER` empty for a server without one. |
+| `SMTP_FROM` | `SMTP_USER` | Sender address |
 
 The database settings go to `/etc/zm/conf.d/03-docker.conf` on every start. `zm.conf` stays as
 the package installed it. Apart from creating and upgrading the schema, the container doesn't
@@ -138,6 +144,35 @@ At start the container also:
   runs `zmupdate.pl --freshen`, which also replaces the shipped `ZM_AUTH_HASH_SECRET` with a random one
 - adds `www-data` to the groups that own any passed-through `/dev/dri`, `/dev/video*` or
   `/dev/nvidia*` devices
+
+### User and group IDs
+
+The container runs as `www-data`, which is 33:33. If your volumes are bind mounts that belong to
+a user on the host, set `PUID` and `PGID` to that user's IDs, for example `PUID=1000 PGID=1000`.
+At start the container gives `www-data` those IDs and re-owns the files it owned before: the
+image's own files, `/config`, `/var/log/zm`, and the top two levels of the events folder.
+
+It doesn't walk the whole events folder, because that can take hours. If you change the IDs on
+an install that already has events, ZoneMinder can still record, but it can't delete the old
+events until you re-own them once. The log says so when that's needed:
+
+```bash
+docker compose exec zoneminder chown -R www-data:www-data /var/cache/zoneminder
+```
+
+### Email
+
+Set `SMTP_HOST`, plus `SMTP_USER` and `SMTP_PASS` if the server needs a login, and the container
+writes an msmtp config for it. Then in ZoneMinder's Options > Email turn on `OPT_EMAIL`,
+`NEW_MAIL_MODULES` and `SSMTP_MAIL`, set `SSMTP_PATH` to `/usr/bin/msmtp`, and fill in the
+addresses. The container doesn't change those settings for you.
+
+To check the settings without ZoneMinder:
+
+```bash
+docker compose exec -u www-data zoneminder sh -c \
+  'printf "Subject: test\n\nhello\n" | msmtp -t you@example.com'
+```
 
 Volumes:
 

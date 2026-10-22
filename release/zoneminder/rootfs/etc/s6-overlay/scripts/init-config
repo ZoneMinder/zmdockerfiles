@@ -51,6 +51,52 @@ host="${ZM_DB_HOST%%:*}"; port=""
 } > "$MYCNF"
 umask 022
 
+# Outgoing mail through msmtp, which ZoneMinder uses when Options > Email has NEW_MAIL_MODULES
+# and SSMTP_MAIL on, and SSMTP_PATH set to /usr/bin/msmtp. Rewritten on every start.
+if [[ -n "${SMTP_PASS_FILE:-}" ]]; then
+    [[ -r "$SMTP_PASS_FILE" ]] || die "SMTP_PASS_FILE=$SMTP_PASS_FILE is not readable"
+    SMTP_PASS="$(<"$SMTP_PASS_FILE")"
+fi
+rm -f /etc/msmtprc /run/msmtp/password
+if [[ -n "${SMTP_HOST:-}" ]]; then
+    case "${SMTP_HOST}${SMTP_PORT:-}${SMTP_USER:-}${SMTP_FROM:-}" in
+        *[[:space:]\"]*) die "SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_FROM must not contain spaces or quotes" ;;
+    esac
+    port="${SMTP_PORT:-587}"
+    tls="${SMTP_TLS:-$([[ "$port" == 465 ]] && echo tls || echo starttls)}"
+    from="${SMTP_FROM:-${SMTP_USER:-}}"
+    [[ -n "$from" ]] || die "set SMTP_FROM (or SMTP_USER) to send mail"
+    {
+        echo "# Written by the container at startup from SMTP_* environment variables. Do not edit."
+        echo "account default"
+        echo "host $SMTP_HOST"
+        echo "port $port"
+        echo "from $from"
+        case "$tls" in
+            starttls) echo "tls on"; echo "tls_starttls on" ;;
+            tls)      echo "tls on"; echo "tls_starttls off" ;;
+            off)      echo "tls off" ;;
+            *)        die "SMTP_TLS must be starttls, tls or off" ;;
+        esac
+        echo "tls_trust_file /etc/ssl/certs/ca-certificates.crt"
+        if [[ -n "${SMTP_USER:-}" ]]; then
+            # msmtp won't send a password without TLS unless the method is named.
+            if [[ "$tls" == off ]]; then echo "auth plain"; else echo "auth on"; fi
+            echo "user $SMTP_USER"
+            echo "passwordeval cat /run/msmtp/password"
+        fi
+        echo "syslog off"
+    } > /etc/msmtprc
+    chmod 644 /etc/msmtprc
+    if [[ -n "${SMTP_USER:-}" ]]; then
+        install -d -m 750 -g www-data /run/msmtp
+        (umask 027; printf '%s' "${SMTP_PASS:-}" > /run/msmtp/password)
+        chgrp www-data /run/msmtp/password
+    fi
+    log "mail goes out through $SMTP_HOST:$port ($tls) from $from"
+    [[ "$tls" == off && -n "${SMTP_USER:-}" ]] && log "WARNING: SMTP_TLS=off sends the SMTP password unencrypted"
+fi
+
 # Runtime dirs (tmpfs in compose). Only top-level dirs are chowned: never walk the events tree.
 install -d -o www-data -g www-data /run/zm /tmp/zm /var/tmp/zm
 install -d -o www-data -g www-data /var/cache/zoneminder/{events,images,temp,cache}

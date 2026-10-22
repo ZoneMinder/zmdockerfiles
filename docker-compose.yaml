@@ -49,6 +49,16 @@ services:
       ZM_DB_NAME: ${ZM_DB_NAME:-zm}
       ZM_DB_USER: ${ZM_DB_USER:-zmuser}
       ZM_DB_PASS: ${ZM_DB_PASS:?set ZM_DB_PASS in .env}
+      # Run as this user and group instead of www-data (33:33), e.g. to match bind mount owners.
+      PUID: ${PUID:-}
+      PGID: ${PGID:-}
+      # Outgoing mail. Leave SMTP_HOST empty to skip.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_TLS: ${SMTP_TLS:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       # Event server (-es images only). Read when /config/es/*.yml is first created.
       ZMES_USE_HOOKS: ${ZMES_USE_HOOKS:-no}
       ZMES_ML_GATEWAY: ${ZMES_ML_GATEWAY:-http://pyzm-serve:5000}

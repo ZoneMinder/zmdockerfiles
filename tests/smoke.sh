@@ -10,7 +10,8 @@
 #
 # Checks: DB schema creation, ZoneMinder's first-run setup (1.39+), health, web UI and API, go2rtc,
 # capture from an RTSP stream, event recording, the event server's TLS WebSocket, the ML hook
-# writing detections to the event, surviving a database outage, and a clean restart.
+# writing detections to the event, running as PUID/PGID, sending mail, surviving a database outage,
+# and a clean restart.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -34,9 +35,17 @@ GO2RTC_API_PORT=11984
 GO2RTC_WEBRTC_PORT=18555
 ZMES_PORT=19000
 ZMES_USE_HOOKS=yes
+PUID=1234
+PGID=1234
+SMTP_HOST=mailpit
+SMTP_PORT=1025
+SMTP_TLS=off
+SMTP_USER=zm@example.com
+SMTP_PASS=Sm0ke"mail\\pass|1
+SMTP_FROM=zm@example.com
 EOF
 compose() {
-    docker compose -p "$project" --env-file "$env_file" -f docker-compose.yaml -f compose.build.yaml --profile ml "$@"
+    docker compose -p "$project" --env-file "$env_file" -f docker-compose.yaml -f compose.build.yaml -f tests/compose.test.yaml --profile ml "$@"
 }
 zm() { compose exec -T zoneminder bash -c "$1"; }
 admin_user=admin
@@ -129,7 +138,11 @@ secret=$(zm 'source /etc/s6-overlay/scripts/common.sh; sql "SELECT Value FROM Co
 [[ "$secret" != "...Change me to something unique..." ]] || fail "auth hash secret still default"
 
 step "event server TLS on 9000"
-zm 'echo | openssl s_client -connect 127.0.0.1:9000 2>/dev/null | grep -q "^New, TLS"' || fail "no TLS WebSocket on 9000"
+# zmdc starts the event server a few seconds after ZoneMinder, so give it a minute.
+zm 'for i in $(seq 30); do
+        echo | openssl s_client -connect 127.0.0.1:9000 2>/dev/null | grep -q "^New, TLS" && exit 0
+        sleep 2
+    done; exit 1' || fail "no TLS WebSocket on 9000"
 
 step "test camera"
 # The test frame is a COCO sample photo of a bus with people, so the detector has something to find.
@@ -172,6 +185,18 @@ for ((i = 0; i < 90; i += 5)); do
 done
 echo "event notes: $notes"
 [[ "$notes" == *detected:*bus* || "$notes" == *detected:*person* ]] || fail "no detections written to the event"
+
+step "PUID/PGID and mail"
+[[ "$(zm 'id -u www-data'):$(zm 'id -g www-data')" == 1234:1234 ]] || fail "www-data is not 1234:1234"
+for p in /var/cache/zoneminder/events /config/es /var/log/zm /opt/zoneminder/venv; do
+    [[ "$(zm "stat -c %u:%g $p")" == 1234:1234 ]] || fail "$p is $(zm "stat -c %u:%g $p"), not 1234:1234"
+done
+[[ "$(zm 'stat -c %u /etc/zm/zm.conf')" == 1234 ]] || fail "/etc/zm/zm.conf doesn't belong to 1234"
+[[ "$(zm 'ps -o uid= -C zmc | sort -u | tr -d " "')" == 1234 ]] || fail "zmc isn't running as 1234"
+compose exec -T -u www-data zoneminder sh -c 'printf "Subject: zm smoke\n\nhello\n" | msmtp -t admin@example.com' \
+    || fail "msmtp couldn't send as www-data"
+zm 'curl -fsS http://mailpit:8025/api/v1/messages' | grep -q '"Subject":"zm smoke"' || fail "mail didn't arrive"
+echo "running as 1234:1234, mail delivered"
 
 step "database outage"
 # zmdc keeps capturing through a DB outage, so the container must stay up and only report unhealthy.
