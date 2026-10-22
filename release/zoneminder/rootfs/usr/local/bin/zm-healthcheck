@@ -1,0 +1,20 @@
+#!/bin/bash
+# Docker HEALTHCHECK. Reports unhealthy, with the reason, if any of these fail:
+#   web   Apache + PHP answer for /zm/ (200/302, or 401 when auth is on)
+#   zmdc  the zmdc.pl daemon process exists (it supervises zmc, zmfilter, the event server ...)
+#   db    the database answers a ping; without it ZoneMinder can't record events
+# A camera that is offline is not a container problem, so per-monitor capture is not checked here.
+# zmwatch restarts stuck capture daemons, and the API (/zm/api/monitors.json) shows per-monitor status.
+fail() { echo "unhealthy: $*"; exit 1; }
+
+code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 http://127.0.0.1/zm/)
+case "$code" in 200|302|401) ;; *) fail "web returned HTTP $code" ;; esac
+
+if [[ "${NO_START_ZM:-0}" != 1 ]]; then
+    pgrep -x zmdc.pl >/dev/null || fail "zmdc.pl is not running"
+fi
+
+mariadb-admin --defaults-extra-file=/run/zm-docker/my.cnf --connect-timeout=5 ping >/dev/null 2>&1 \
+    || fail "database not reachable"
+
+echo healthy

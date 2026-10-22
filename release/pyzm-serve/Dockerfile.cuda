@@ -1,0 +1,91 @@
+# pyzm-serve with GPU inference on NVIDIA cards.
+#
+#   docker build -f release/pyzm-serve/Dockerfile.cuda -t zoneminder-pyzm-serve:cuda release/pyzm-serve
+#
+# pyzm runs models through OpenCV's DNN module and uses the GPU through its CUDA backend.
+# The opencv-python wheels on PyPI are built without CUDA, so this image compiles OpenCV.
+# The compile takes one to three hours. It only depends on the ARGs below, so the build
+# cache keeps it until one of them changes.
+#
+# CUDA 13 supports Turing (7.5) and newer. CUDA_ARCH_BIN lists the GPU generations to
+# compile kernels for: Turing, Ampere, Ada, Hopper and Blackwell. PTX for the newest one
+# lets the driver compile for cards newer than that. Building for one card is much faster:
+#   --build-arg CUDA_ARCH_BIN=8.6
+ARG CUDA_IMAGE_VERSION=13.4.3
+ARG UBUNTU=ubuntu24.04
+
+FROM nvidia/cuda:${CUDA_IMAGE_VERSION}-cudnn-devel-${UBUNTU} AS opencv
+
+ARG PYZM_VERSION=2.5.4
+ARG OPENCV_VERSION=4.14.0
+ARG CUDA_ARCH_BIN="7.5;8.0;8.6;8.9;9.0;10.0;12.0"
+ARG CUDA_ARCH_PTX="12.0"
+# nvcc uses a lot of memory per job. Lower this if the build gets killed.
+ARG BUILD_JOBS=8
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates cmake curl g++ make python3 python3-dev python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# pyzm first, so OpenCV's Python bindings build against the numpy pyzm installs.
+RUN python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir "pyzm[serve]==${PYZM_VERSION}"
+
+# The DNN CUDA backend needs the cudev module from opencv_contrib.
+RUN mkdir /src && cd /src \
+    && curl -fsSL "https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz" | tar xz \
+    && curl -fsSL "https://github.com/opencv/opencv_contrib/archive/refs/tags/${OPENCV_VERSION}.tar.gz" | tar xz \
+    && cmake -S "opencv-${OPENCV_VERSION}" -B build \
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_INSTALL_PREFIX=/opt/opencv \
+        -D OPENCV_EXTRA_MODULES_PATH="/src/opencv_contrib-${OPENCV_VERSION}/modules" \
+        -D BUILD_LIST=core,imgproc,imgcodecs,dnn,cudev,python3 \
+        -D WITH_CUDA=ON -D WITH_CUDNN=ON -D WITH_CUBLAS=ON -D OPENCV_DNN_CUDA=ON \
+        -D CUDA_ARCH_BIN="${CUDA_ARCH_BIN}" -D CUDA_ARCH_PTX="${CUDA_ARCH_PTX}" \
+        -D BUILD_JPEG=ON -D BUILD_PNG=ON -D BUILD_ZLIB=ON \
+        -D WITH_TIFF=OFF -D WITH_WEBP=OFF -D WITH_OPENJPEG=OFF -D WITH_JASPER=OFF \
+        -D WITH_OPENEXR=OFF -D WITH_IMGCODEC_HDR=OFF -D WITH_IMGCODEC_PXM=OFF \
+        -D WITH_GTK=OFF -D WITH_QT=OFF -D WITH_OPENCL=OFF -D WITH_FFMPEG=OFF -D WITH_GSTREAMER=OFF \
+        -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_EXAMPLES=OFF -D BUILD_DOCS=OFF \
+        -D BUILD_opencv_apps=OFF -D BUILD_JAVA=OFF \
+        -D PYTHON3_EXECUTABLE=/opt/venv/bin/python \
+        -D OPENCV_PYTHON3_INSTALL_PATH=/opt/venv/lib/python3.12/site-packages \
+    && cmake --build build -j"${BUILD_JOBS}" \
+    && cmake --install build \
+    && rm -rf /src
+
+# Fail the build if CUDA or cuDNN didn't make it into OpenCV.
+RUN echo /opt/opencv/lib > /etc/ld.so.conf.d/opencv.conf && ldconfig \
+    && /opt/venv/bin/python -c "import cv2, re; info = cv2.getBuildInformation(); \
+        assert re.search(r'NVIDIA CUDA:\s+YES', info), 'no CUDA'; \
+        assert re.search(r'cuDNN:\s+YES', info), 'no cuDNN'; \
+        print('OpenCV', cv2.__version__, 'with CUDA and cuDNN')"
+
+FROM nvidia/cuda:${CUDA_IMAGE_VERSION}-cudnn-runtime-${UBUNTU}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --home /models pyzm \
+    && install -d -o pyzm -g pyzm /models
+
+COPY --from=opencv /opt/opencv /opt/opencv
+COPY --from=opencv /opt/venv /opt/venv
+RUN echo /opt/opencv/lib > /etc/ld.so.conf.d/opencv.conf && ldconfig
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY healthcheck.py /usr/local/bin/pyzm-healthcheck
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    PYZM_MODELS="YOLO ONNX=yolo11s" \
+    PYZM_PROCESSOR="gpu" \
+    PYZM_PORT="5000" \
+    PYZM_ASSETS_URL="https://github.com/pliablepixels/zmes_ai_assets/raw/master/models/ultralytics" \
+    NVIDIA_VISIBLE_DEVICES="all" \
+    NVIDIA_DRIVER_CAPABILITIES="compute,utility"
+
+VOLUME /models
+EXPOSE 5000
+USER pyzm
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s CMD ["pyzm-healthcheck"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -1,0 +1,29 @@
+#!/command/with-contenv bash
+# Wait for the database, then create or upgrade the schema. ZoneMinder settings are left to the UI;
+# zmupdate.pl --freshen also replaces the shipped ZM_AUTH_HASH_SECRET with a random one.
+set -euo pipefail
+source /etc/s6-overlay/scripts/common.sh
+
+timeout="${ZM_DB_WAIT_TIMEOUT:-180}"
+log "waiting up to ${timeout}s for database at $ZM_DB_HOST"
+for (( i = 0; ; i += 2 )); do
+    if mariadb --defaults-extra-file="$MYCNF" -e 'SELECT 1' >/dev/null 2>&1; then break; fi
+    (( i >= timeout )) && { mariadb --defaults-extra-file="$MYCNF" -e 'SELECT 1' || true; die "database not reachable"; }
+    sleep 2
+done
+
+has_schema=$(mariadb --defaults-extra-file="$MYCNF" -N -B -e \
+    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$ZM_DB_NAME' AND table_name='Config'")
+if [[ "$has_schema" == 0 ]]; then
+    log "empty database, loading zm_create.sql into '$ZM_DB_NAME'"
+    sed -e "s/^CREATE DATABASE \(.*\)\`zm\`;/CREATE DATABASE \1\`$ZM_DB_NAME\`;/" \
+        -e "s/^USE \`zm\`;/USE \`$ZM_DB_NAME\`;/" \
+        /usr/share/zoneminder/db/zm_create.sql \
+        | mariadb --defaults-extra-file="$MYCNF"
+else
+    log "database is at version $(sql "SELECT Value FROM Config WHERE Name='ZM_DYN_DB_VERSION'"), running zmupdate.pl"
+    /usr/bin/zmupdate.pl --nointeractive
+fi
+/usr/bin/zmupdate.pl --nointeractive --freshen >/dev/null
+
+log "database ready, ZoneMinder $(sql "SELECT Value FROM Config WHERE Name='ZM_DYN_DB_VERSION'")"

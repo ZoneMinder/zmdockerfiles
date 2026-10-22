@@ -1,0 +1,60 @@
+#!/command/with-contenv bash
+# zm-es image only: seed event server config into /config/es and generate a TLS cert if none given.
+set -euo pipefail
+source /etc/s6-overlay/scripts/common.sh
+[[ -x /usr/bin/zmeventnotification.pl ]] || exit 0
+
+install -d -o www-data -g www-data -m 750 /config/es /config/es/push
+for f in zmeventnotification.yml secrets.yml objectconfig.yml es_rules.yml; do
+    if [[ ! -f "/config/es/$f" ]]; then
+        log "seeding /config/es/$f"
+        cp "/usr/share/zmes-defaults/$f" "/config/es/$f"
+        case "$f" in
+            secrets.yml)
+                sed -i \
+                    -e "s|^\(\s*ZM_PORTAL:\).*|\1 \"${ZMES_PORTAL:-http://127.0.0.1/zm}\"|" \
+                    -e "s|^\(\s*ZM_API_PORTAL:\).*|\1 \"${ZMES_PORTAL:-http://127.0.0.1/zm}/api\"|" \
+                    -e "s|^\(\s*ZMES_PICTURE_URL:\).*|\1 \"${ZMES_PORTAL:-http://127.0.0.1/zm}/index.php?view=image\&eid=EVENTID\&fid=objdetect\&width=600\"|" \
+                    -e "s|^\(\s*ES_CERT_FILE:\).*|\1 /config/ssl/es.crt|" \
+                    -e "s|^\(\s*ES_KEY_FILE:\).*|\1 /config/ssl/es.key|" \
+                    "/config/es/$f"
+                ;;
+            zmeventnotification.yml)
+                # Docker networks are usually IPv4 only, and the ES default of [::] fails to bind there.
+                sed -i \
+                    -e "s|^\(\s*use_hooks:\).*|\1 \"${ZMES_USE_HOOKS:-no}\"|" \
+                    -e "s|^\(\s*\)#address: \"1.2.3.4\"|\1address: \"${ZMES_LISTEN_ADDRESS:-0.0.0.0}\"|" \
+                    "/config/es/$f"
+                ;;
+            objectconfig.yml)
+                if [[ -n "${ZMES_ML_GATEWAY:-}" ]]; then
+                    sed -i \
+                        -e "s|^\(\s*\)#\?\s*ml_gateway:.*|\1ml_gateway: \"$ZMES_ML_GATEWAY\"|" \
+                        -e "s|^\(\s*\)#\?\s*ml_fallback_local:.*|\1ml_fallback_local: \"no\"|" \
+                        -e "s|^\(\s*model_sequence:\).*|\1 \"${ZMES_MODEL_SEQUENCE:-object}\"|" \
+                        -e "s|^\(\s*\)#\?\s*ml_gateway_mode:.*|\1ml_gateway_mode: \"${ZMES_ML_GATEWAY_MODE:-image}\"|" \
+                        "/config/es/$f"
+                fi
+                ;;
+        esac
+        chown www-data:www-data "/config/es/$f"
+        chmod 640 "/config/es/$f"
+    fi
+    ln -sfn "/config/es/$f" "/etc/zm/$f"
+done
+
+# Push tokens survive container rebuilds
+if [[ -d /var/lib/zmeventnotification/push && ! -L /var/lib/zmeventnotification/push ]]; then
+    cp -an /var/lib/zmeventnotification/push/. /config/es/push/ 2>/dev/null || true
+    rm -rf /var/lib/zmeventnotification/push
+fi
+ln -sfn /config/es/push /var/lib/zmeventnotification/push
+
+install -d -m 755 /config/ssl
+if [[ ! -f /config/ssl/es.crt || ! -f /config/ssl/es.key ]]; then
+    log "no certificate in /config/ssl, generating a self-signed one (mount your own es.crt/es.key to replace it)"
+    openssl req -x509 -nodes -newkey rsa:2048 -days 3650 -subj "/CN=${ZMES_CERT_CN:-$(hostname)}" \
+        -keyout /config/ssl/es.key -out /config/ssl/es.crt 2>/dev/null
+fi
+chown www-data:www-data /config/ssl/es.key /config/ssl/es.crt
+chmod 640 /config/ssl/es.key

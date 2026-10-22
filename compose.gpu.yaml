@@ -1,0 +1,18 @@
+# Run object detection on an NVIDIA GPU:
+#   docker compose -f docker-compose.yaml -f compose.gpu.yaml --profile ml up -d
+#
+# The host needs the NVIDIA driver and the NVIDIA Container Toolkit. Check with
+#   docker run --rm --gpus all ubuntu nvidia-smi
+# The image supports Turing (GTX 16xx, RTX 20xx) and newer. It is amd64 only.
+services:
+  pyzm-serve:
+    image: ${PYZM_IMAGE:-zoneminder/pyzm-serve}:${PYZM_CUDA_TAG:-cuda}
+    environment:
+      PYZM_PROCESSOR: gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${PYZM_GPU_COUNT:-1}
+              capabilities: [gpu]

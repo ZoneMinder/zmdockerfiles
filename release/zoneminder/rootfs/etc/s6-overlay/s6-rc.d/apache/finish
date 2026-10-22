@@ -1,0 +1,6 @@
+#!/command/with-contenv bash
+# Any exit other than a requested stop takes the container down so the restart policy can act.
+if [[ "$1" != 256 ]]; then
+    echo "$1" > /run/s6-linux-init-container-results/exitcode
+    /run/s6/basedir/bin/halt
+fi

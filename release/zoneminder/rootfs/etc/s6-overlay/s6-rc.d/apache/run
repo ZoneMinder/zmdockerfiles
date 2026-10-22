@@ -1,0 +1,5 @@
+#!/command/with-contenv bash
+source /etc/apache2/envvars
+mkdir -p /run/lock "$APACHE_RUN_DIR" "$APACHE_LOCK_DIR" "$APACHE_LOG_DIR"
+rm -f "${APACHE_PID_FILE:-/var/run/apache2/apache2.pid}"
+exec apache2 -DFOREGROUND

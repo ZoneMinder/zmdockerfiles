@@ -1,9 +1,6 @@
-This forum is intended only for bug reports. 
+This tracker is for bugs in these Docker images. Please ask usage questions on the forum at https://forums.zoneminder.com/.
 
-Please post general use questions in our user forum at https://forums.zoneminder.com/.
-
-When creating an issue, please provide the following information:
-- The exact dockerfile you chose to use from this repository
-- Provide the full syntax showing how you started the container from the command line
-- Relevant output indiating the problem.
-
+Please include:
+- which image and tag you ran (`zm`, `zm-es`, `pyzm-serve`, or a local build and the commit)
+- your `docker-compose.yaml` or `docker run` command, with passwords removed
+- the output of `docker compose logs zoneminder` around the problem
