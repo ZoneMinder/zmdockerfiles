@@ -1,0 +1,7 @@
+# Extra services for tests/smoke.sh: a mail server that accepts only the test login.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.31
+    environment:
+      MP_SMTP_AUTH: "${SMTP_USER}:${SMTP_PASS}"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"

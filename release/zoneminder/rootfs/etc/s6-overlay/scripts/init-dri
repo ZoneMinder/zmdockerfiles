@@ -1,0 +1,19 @@
+#!/command/with-contenv bash
+# Give www-data access to passed-through GPU / video devices by joining their owning groups.
+set -euo pipefail
+source /etc/s6-overlay/scripts/common.sh
+shopt -s nullglob
+for dev in /dev/dri/* /dev/nvidia* /dev/video* /dev/apex_*; do
+    [[ -c "$dev" ]] || continue
+    gid=$(stat -c %g "$dev")
+    [[ "$gid" == 0 ]] && { chmod o+rw "$dev" 2>/dev/null || true; continue; }
+    group=$(getent group "$gid" | cut -d: -f1 || true)
+    if [[ -z "$group" ]]; then
+        group="hostdev$gid"
+        groupadd -g "$gid" "$group"
+    fi
+    if ! id -nG www-data | tr ' ' '\n' | grep -qx "$group"; then
+        usermod -aG "$group" www-data
+        log "www-data added to group $group for $dev"
+    fi
+done

@@ -1,0 +1,36 @@
+#!/command/with-contenv bash
+# PUID/PGID: run ZoneMinder, Apache and go2rtc as this user and group instead of www-data's
+# 33:33, so bind-mounted folders can belong to a user on the host.
+set -euo pipefail
+source /etc/s6-overlay/scripts/common.sh
+
+[[ -n "${PUID:-}${PGID:-}" ]] || exit 0
+
+old_uid=$(id -u www-data)
+old_gid=$(id -g www-data)
+uid="${PUID:-$old_uid}"
+gid="${PGID:-$old_gid}"
+[[ "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ ]] || die "PUID and PGID must be numbers"
+[[ "$uid" != 0 && "$gid" != 0 ]] || die "PUID/PGID 0 would run ZoneMinder as root. Leave them unset instead."
+[[ "$uid" == "$old_uid" && "$gid" == "$old_gid" ]] && exit 0  # already done, e.g. after a restart
+
+log "running as $uid:$gid instead of $old_uid:$old_gid"
+groupmod -o -g "$gid" www-data
+usermod -o -u "$uid" -g "$gid" www-data
+
+# Give the new IDs whatever the old ones owned: everything on the image's own filesystem
+# (-xdev), then the config and log volumes. Only the top two levels of the events volume,
+# which is enough to record new events. Walking every old event can take hours.
+reown() {  # reown <find args...>
+    find "$@" \( -path /proc -o -path /sys -o -path /dev \) -prune -o -user "$old_uid" -exec chown -h "$uid" {} +
+    find "$@" \( -path /proc -o -path /sys -o -path /dev \) -prune -o -group "$old_gid" -exec chgrp -h "$gid" {} +
+}
+reown / -xdev
+for d in /config /var/log/zm; do [[ -d "$d" ]] && reown "$d" -xdev; done
+if [[ -d /var/cache/zoneminder ]]; then
+    reown /var/cache/zoneminder -xdev -maxdepth 2
+    if [[ -n "$(find /var/cache/zoneminder -xdev -mindepth 3 -user "$old_uid" -print -quit)" ]]; then
+        log "events recorded before the change still belong to $old_uid, so ZoneMinder can't delete them." \
+            "To fix: docker compose exec zoneminder chown -R www-data:www-data /var/cache/zoneminder"
+    fi
+fi

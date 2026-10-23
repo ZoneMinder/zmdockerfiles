@@ -1,0 +1,17 @@
+# Build the images from this repo instead of pulling them:
+#   docker compose -f docker-compose.yaml -f compose.build.yaml up -d --build
+#
+# Set ZM_TARGET=zm-es to build the event server image. The image is tagged
+# ${ZM_IMAGE}:${ZM_TAG}, so pick a tag that won't be mistaken for a pulled one, e.g. ZM_TAG=local.
+services:
+  zoneminder:
+    build:
+      context: release/zoneminder
+      target: ${ZM_TARGET:-zm}
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-debian:stable-slim}  # or ubuntu:26.04
+        ZM_CHANNEL: ${ZM_CHANNEL:-release}             # release, master (nightly), or e.g. release-1.38
+        ZM_VERSION: ${ZM_VERSION:-}                    # exact package version, empty = newest
+
+  pyzm-serve:
+    build: release/pyzm-serve

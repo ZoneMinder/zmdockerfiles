@@ -1,0 +1,4 @@
+#!/command/with-contenv bash
+# Copy ZoneMinder's own log files to the container's stdout.
+exec tail -n0 -q -F /var/log/zm/zmpkg.log /var/log/zm/zmdc.log /var/log/zm/zmwatch.log \
+    /var/log/zm/zmfilter_1.log /var/log/zm/zmfilter_2.log /var/log/zm/zmeventnotification.log 2>/dev/null

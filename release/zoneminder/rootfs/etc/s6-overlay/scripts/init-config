@@ -1,0 +1,124 @@
+#!/command/with-contenv bash
+set -euo pipefail
+source /etc/s6-overlay/scripts/common.sh
+
+[[ -n "${ZM_DB_PASS:-}" ]] || die "set ZM_DB_PASS or ZM_DB_PASS_FILE"
+case "$ZM_DB_PASS$ZM_DB_USER$ZM_DB_HOST$ZM_DB_NAME" in
+    *$'\n'*) die "DB settings must not contain newlines" ;;
+esac
+
+# Timezone for the OS, PHP and the ZM daemons
+if [[ ! -e "/usr/share/zoneinfo/$TZ" ]]; then die "unknown TZ '$TZ'"; fi
+ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+echo "$TZ" > /etc/timezone
+for d in /etc/php/*/apache2/conf.d /etc/php/*/cli/conf.d; do
+    printf 'date.timezone = "%s"\n' "$TZ" > "$d/99-zoneminder-docker.ini"
+done
+
+# DB settings (and the event server switch) go in a conf.d drop-in; zm.conf is left as packaged.
+umask 027
+{
+    echo "# Written by the container at startup from ZM_* environment variables. Do not edit."
+    echo "ZM_DB_HOST=$ZM_DB_HOST"
+    echo "ZM_DB_NAME=$ZM_DB_NAME"
+    echo "ZM_DB_USER=$ZM_DB_USER"
+    echo "ZM_DB_PASS=$ZM_DB_PASS"
+    [[ -n "${ZM_DB_SSL_CA_CERT:-}" ]] && echo "ZM_DB_SSL_CA_CERT=$ZM_DB_SSL_CA_CERT"
+    [[ -n "${ZM_DB_SSL_CLIENT_KEY:-}" ]] && echo "ZM_DB_SSL_CLIENT_KEY=$ZM_DB_SSL_CLIENT_KEY"
+    [[ -n "${ZM_DB_SSL_CLIENT_CERT:-}" ]] && echo "ZM_DB_SSL_CLIENT_CERT=$ZM_DB_SSL_CLIENT_CERT"
+    [[ -n "${ZM_SERVER_HOST:-}" ]] && echo "ZM_SERVER_HOST=$ZM_SERVER_HOST"
+    # Event server on/off. A conf.d value wins over Options in the UI; only zmdc/zmpkg read this one.
+    if [[ -x /usr/bin/zmeventnotification.pl && -n "${ZM_ES_ENABLE:-}" ]]; then
+        if [[ "$ZM_ES_ENABLE" == 1 ]]; then echo "ZM_OPT_USE_EVENTNOTIFICATION=1"; else echo "ZM_OPT_USE_EVENTNOTIFICATION=0"; fi
+    fi
+    true
+} > /etc/zm/conf.d/03-docker.conf
+chown www-data:root /etc/zm/conf.d/03-docker.conf
+
+# Client config for the init scripts, so the password never appears on a command line.
+umask 077
+mkdir -p /run/zm-docker
+host="${ZM_DB_HOST%%:*}"; port=""
+[[ "$ZM_DB_HOST" == *:* ]] && port="${ZM_DB_HOST#*:}"
+{
+    echo "[client]"
+    if [[ "$port" == /* ]]; then echo "socket=$port"; else echo "host=$host"; [[ -n "$port" ]] && echo "port=$port"; fi
+    echo "user=$ZM_DB_USER"
+    printf 'password="%s"\n' "$(printf '%s' "$ZM_DB_PASS" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+    [[ -n "${ZM_DB_SSL_CA_CERT:-}" ]] && echo "ssl-ca=$ZM_DB_SSL_CA_CERT"
+    [[ -n "${ZM_DB_SSL_CLIENT_KEY:-}" ]] && echo "ssl-key=$ZM_DB_SSL_CLIENT_KEY"
+    [[ -n "${ZM_DB_SSL_CLIENT_CERT:-}" ]] && echo "ssl-cert=$ZM_DB_SSL_CLIENT_CERT"
+} > "$MYCNF"
+umask 022
+
+# Outgoing mail through msmtp, which ZoneMinder uses when Options > Email has NEW_MAIL_MODULES
+# and SSMTP_MAIL on, and SSMTP_PATH set to /usr/bin/msmtp. Rewritten on every start.
+if [[ -n "${SMTP_PASS_FILE:-}" ]]; then
+    [[ -r "$SMTP_PASS_FILE" ]] || die "SMTP_PASS_FILE=$SMTP_PASS_FILE is not readable"
+    SMTP_PASS="$(<"$SMTP_PASS_FILE")"
+fi
+rm -f /etc/msmtprc /run/msmtp/password
+if [[ -n "${SMTP_HOST:-}" ]]; then
+    case "${SMTP_HOST}${SMTP_PORT:-}${SMTP_USER:-}${SMTP_FROM:-}" in
+        *[[:space:]\"]*) die "SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_FROM must not contain spaces or quotes" ;;
+    esac
+    port="${SMTP_PORT:-587}"
+    tls="${SMTP_TLS:-$([[ "$port" == 465 ]] && echo tls || echo starttls)}"
+    from="${SMTP_FROM:-${SMTP_USER:-}}"
+    [[ -n "$from" ]] || die "set SMTP_FROM (or SMTP_USER) to send mail"
+    {
+        echo "# Written by the container at startup from SMTP_* environment variables. Do not edit."
+        echo "account default"
+        echo "host $SMTP_HOST"
+        echo "port $port"
+        echo "from $from"
+        case "$tls" in
+            starttls) echo "tls on"; echo "tls_starttls on" ;;
+            tls)      echo "tls on"; echo "tls_starttls off" ;;
+            off)      echo "tls off" ;;
+            *)        die "SMTP_TLS must be starttls, tls or off" ;;
+        esac
+        echo "tls_trust_file /etc/ssl/certs/ca-certificates.crt"
+        if [[ -n "${SMTP_USER:-}" ]]; then
+            # msmtp won't send a password without TLS unless the method is named.
+            if [[ "$tls" == off ]]; then echo "auth plain"; else echo "auth on"; fi
+            echo "user $SMTP_USER"
+            echo "passwordeval cat /run/msmtp/password"
+        fi
+        echo "syslog off"
+    } > /etc/msmtprc
+    chmod 644 /etc/msmtprc
+    if [[ -n "${SMTP_USER:-}" ]]; then
+        install -d -m 750 -g www-data /run/msmtp
+        (umask 027; printf '%s' "${SMTP_PASS:-}" > /run/msmtp/password)
+        chgrp www-data /run/msmtp/password
+    fi
+    log "mail goes out through $SMTP_HOST:$port ($tls) from $from"
+    [[ "$tls" == off && -n "${SMTP_USER:-}" ]] && log "WARNING: SMTP_TLS=off sends the SMTP password unencrypted"
+fi
+
+# Runtime dirs (tmpfs in compose). Only top-level dirs are chowned: never walk the events tree.
+install -d -o www-data -g www-data /run/zm /tmp/zm /var/tmp/zm
+install -d -o www-data -g www-data /var/cache/zoneminder/{events,images,temp,cache}
+chown www-data:www-data /var/cache/zoneminder /var/log/zm
+install -d /config
+
+if [[ ! -f /config/go2rtc.yaml ]]; then
+    log "writing default /config/go2rtc.yaml"
+    cat > /config/go2rtc.yaml <<'YAML'
+# go2rtc config. ZoneMinder adds camera streams through the API at runtime.
+# Docs: https://github.com/AlexxIT/go2rtc#configuration
+api:
+  listen: ":1984"
+rtsp:
+  listen: ":8554"
+webrtc:
+  listen: ":8555"
+YAML
+    chown www-data:www-data /config/go2rtc.yaml
+fi
+
+shm_kb=$(df -k --output=size /dev/shm | tail -1 | tr -d ' ')
+if (( shm_kb < 262144 )); then
+    log "WARNING: /dev/shm is only $((shm_kb / 1024)) MB. ZoneMinder needs roughly width*height*4*buffer_frames per monitor."
+fi

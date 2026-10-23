@@ -1,23 +1,101 @@
-version: '3.1'
+# ZoneMinder + MariaDB, with an optional event server and ML detection.
+#
+#   cp .env.example .env    # then set the passwords
+#   docker compose up -d                                         # ZoneMinder only
+#   ZM_TAG=latest-es docker compose up -d                        # + zmeventnotificationNg (push, WebSocket, MQTT)
+#   ZM_TAG=latest-es ZMES_USE_HOOKS=yes docker compose --profile ml up -d   # + object detection
+#
+# Tags: latest, latest-es (newest release), dev, dev-es (nightly), or a version such as 1.38 / 1.38-es.
+# To build the images yourself instead of pulling, add the build override:
+#   docker compose -f docker-compose.yaml -f compose.build.yaml up -d --build
+#
+# UI: http://localhost:${ZM_HTTP_PORT:-8080}/zm
+
+name: zoneminder
+
 services:
-    zoneminder:
-        container_name: zoneminder
-        image: zoneminderhq/zoneminder:latest-ubuntu18.04
-        restart: unless-stopped
-        ports:
-            - 7878:80
-        network_mode: "bridge"
-        privileged: true
-        shm_size: 512M
-        environment:
-            - TZ=${TZ:-Australia/Perth}
-        volumes:
-            - events:/var/cache/zoneminder/events
-            - images:/var/cache/zoneminder/images
-            - mysql:/var/lib/mysql
-            - logs:/var/log/zm
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    command:
+      - --transaction-isolation=READ-COMMITTED
+      - --skip-log-bin
+      - --innodb-buffer-pool-size=${DB_BUFFER_POOL:-256M}
+    environment:
+      TZ: ${TZ:-UTC}
+      MARIADB_DATABASE: ${ZM_DB_NAME:-zm}
+      MARIADB_USER: ${ZM_DB_USER:-zmuser}
+      MARIADB_PASSWORD: ${ZM_DB_PASS:?set ZM_DB_PASS in .env}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?set MARIADB_ROOT_PASSWORD in .env}
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  zoneminder:
+    image: ${ZM_IMAGE:-zoneminder/zoneminder}:${ZM_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    stop_grace_period: 60s
+    environment:
+      TZ: ${TZ:-UTC}
+      ZM_DB_HOST: db
+      ZM_DB_NAME: ${ZM_DB_NAME:-zm}
+      ZM_DB_USER: ${ZM_DB_USER:-zmuser}
+      ZM_DB_PASS: ${ZM_DB_PASS:?set ZM_DB_PASS in .env}
+      # Run as this user and group instead of www-data (33:33), e.g. to match bind mount owners.
+      PUID: ${PUID:-}
+      PGID: ${PGID:-}
+      # Outgoing mail. Leave SMTP_HOST empty to skip.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_TLS: ${SMTP_TLS:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      # Event server (-es images only). Read when /config/es/*.yml is first created.
+      ZMES_USE_HOOKS: ${ZMES_USE_HOOKS:-no}
+      ZMES_ML_GATEWAY: ${ZMES_ML_GATEWAY:-http://pyzm-serve:5000}
+    ports:
+      - "${ZM_HTTP_PORT:-8080}:80"
+      - "${GO2RTC_API_PORT:-1984}:1984"
+      - "${GO2RTC_WEBRTC_PORT:-8555}:8555/tcp"
+      - "${GO2RTC_WEBRTC_PORT:-8555}:8555/udp"
+      - "${ZMES_PORT:-9000}:9000"
+    volumes:
+      - events:/var/cache/zoneminder
+      - logs:/var/log/zm
+      - config:/config
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: ${ZM_SHM_SIZE:-1073741824}  # bytes; ZM keeps its ring buffers here
+    tmpfs:
+      - /run:exec,mode=0755  # s6-overlay runs from /run, so it must allow exec
+      - /tmp
+    # Hardware decoding: pass the GPU through, then set DecoderHWAccelName/Device on the monitor.
+    # devices:
+    #   - /dev/dri:/dev/dri
+
+  # Object detection server for the event server hook. Started with --profile ml.
+  pyzm-serve:
+    image: ${PYZM_IMAGE:-zoneminder/pyzm-serve}:${PYZM_TAG:-latest}
+    profiles: [ml]
+    restart: unless-stopped
+    environment:
+      PYZM_MODELS: ${PYZM_MODELS:-YOLO ONNX=yolo11s}
+    volumes:
+      - models:/models
+
 volumes:
+  db:
   events:
-  images:
-  mysql:
   logs:
+  config:
+  models:

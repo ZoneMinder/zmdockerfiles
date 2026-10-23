@@ -1,0 +1,2 @@
+#!/command/with-contenv bash
+exec s6-setuidgid www-data /usr/local/bin/go2rtc -config /config/go2rtc.yaml

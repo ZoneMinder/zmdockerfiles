@@ -1,0 +1,15 @@
+#!/command/with-contenv bash
+if [[ "${NO_START_ZM:-0}" == 1 ]]; then
+    echo "[zoneminder] NO_START_ZM=1, not starting ZoneMinder"
+    exec sleep infinity
+fi
+/usr/bin/zmpkg.pl start || exit 1
+# zmdc daemonises, so watch its process and exit (stopping the container) if it dies.
+# This checks the process, not `zmdc.pl check`, because that needs the database and would turn
+# a short DB outage into a full restart. zmdc keeps the capture daemons running through one.
+while sleep "${ZM_WATCH_INTERVAL:-30}"; do
+    if ! pgrep -x zmdc.pl >/dev/null; then
+        echo "[zoneminder] zmdc.pl is not running, exiting" >&2
+        exit 1
+    fi
+done

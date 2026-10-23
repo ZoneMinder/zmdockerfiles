@@ -1,0 +1,138 @@
+name: images
+
+# For each ZoneMinder channel (newest release, nightly master):
+#   1. run tests/smoke.sh against an amd64 build of the full compose stack
+#   2. if that passes on master, build amd64 + arm64 and push to Docker Hub
+# The daily run picks up new ZoneMinder releases (including a new 1.x channel) and nightlies
+# without anyone editing this repo. Pushing needs DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets,
+# with a token that can write to both the zoneminder and zoneminderhq organisations.
+#
+# Images: zoneminder/zoneminder (mirrored to zoneminderhq/zoneminder, the name the old images used)
+#         zoneminder/pyzm-serve
+
+on:
+  push:
+    branches: [master]
+    paths: ['release/**', 'tests/**', 'docker-compose.yaml', '.github/workflows/images.yml']
+  pull_request:
+    paths: ['release/**', 'tests/**', 'docker-compose.yaml', '.github/workflows/images.yml']
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      test_push:
+        description: Push to the -test repos (e.g. zoneminder/zoneminder-test) from any branch
+        type: boolean
+        default: false
+
+env:
+  REPOS: zoneminder/zoneminder zoneminderhq/zoneminder
+  PYZM_REPO: zoneminder/pyzm-serve
+  BASE_IMAGE: debian:stable-slim
+
+jobs:
+  image:
+    name: ${{ matrix.channel }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - channel: release
+            tag: latest
+          - channel: master
+            tag: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve ZoneMinder version
+        id: zm
+        run: |
+          codename=$(docker run --rm "$BASE_IMAGE" sh -c '. /etc/os-release && echo "$VERSION_CODENAME"')
+          eval "$(release/zoneminder/zm-version.sh "${{ matrix.channel }}" "$codename" amd64)"
+          upstream=${ZM_VERSION%%[+~]*}     # 1.38.6+trixie1 -> 1.38.6
+          upstream=${upstream%-*}
+          minor=${upstream%.*}              # 1.38
+          pyzm=$(sed -n 's/^ARG PYZM_VERSION=//p' release/pyzm-serve/Dockerfile)
+          if [ "${{ inputs.test_push }}" = true ]; then
+            REPOS=$(for r in $REPOS; do printf '%s-test ' "$r"; done)
+            PYZM_REPO="$PYZM_REPO-test"
+          fi
+          push=false
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            if [ "${{ inputs.test_push }}" = true ]; then push=true; fi
+            if [ "${{ github.event_name }}" != pull_request ] && [ "${{ github.ref }}" = refs/heads/master ]; then push=true; fi
+          fi
+          tags() {  # tags <suffix>: every repo x {channel tag, minor, full version}
+            for repo in $REPOS; do
+              for t in "${{ matrix.tag }}" "$minor" "$upstream"; do echo "$repo:$t$1"; done
+            done
+          }
+          {
+            echo "channel=$ZM_CHANNEL"
+            echo "version=$ZM_VERSION"
+            echo "push=$push"
+            echo "zm_tags<<EOF"; tags ""; echo "EOF"
+            echo "es_tags<<EOF"; tags "-es"; echo "EOF"
+            echo "pyzm_tags<<EOF"; echo "$PYZM_REPO:latest"; echo "$PYZM_REPO:$pyzm"; echo "EOF"
+          } | tee -a "$GITHUB_OUTPUT"
+
+      - name: Smoke test
+        env:
+          ZM_CHANNEL: ${{ steps.zm.outputs.channel }}
+          ZM_VERSION: ${{ steps.zm.outputs.version }}
+        run: tests/smoke.sh
+
+      - uses: docker/setup-qemu-action@v3
+        if: steps.zm.outputs.push == 'true'
+      - uses: docker/setup-buildx-action@v3
+        if: steps.zm.outputs.push == 'true'
+      - uses: docker/login-action@v3
+        if: steps.zm.outputs.push == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push zm
+        if: steps.zm.outputs.push == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: release/zoneminder
+          target: zm
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            ZM_CHANNEL=${{ steps.zm.outputs.channel }}
+            ZM_VERSION=${{ steps.zm.outputs.version }}
+          tags: ${{ steps.zm.outputs.zm_tags }}
+          cache-from: type=gha,scope=${{ matrix.channel }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
+
+      - name: Push zm-es
+        if: steps.zm.outputs.push == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: release/zoneminder
+          target: zm-es
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            ZM_CHANNEL=${{ steps.zm.outputs.channel }}
+            ZM_VERSION=${{ steps.zm.outputs.version }}
+          tags: ${{ steps.zm.outputs.es_tags }}
+          cache-from: type=gha,scope=${{ matrix.channel }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
+
+      - name: Push pyzm-serve
+        if: steps.zm.outputs.push == 'true' && matrix.channel == 'release'
+        uses: docker/build-push-action@v6
+        with:
+          context: release/pyzm-serve
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.zm.outputs.pyzm_tags }}
+          cache-from: type=gha,scope=pyzm-serve
+          cache-to: type=gha,mode=max,scope=pyzm-serve
