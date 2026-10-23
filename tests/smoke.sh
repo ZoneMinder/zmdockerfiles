@@ -9,9 +9,9 @@
 #   KEEP=1 tests/smoke.sh     # leave the stack running afterwards
 #
 # Checks: DB schema creation, ZoneMinder's first-run setup (1.39+), health, web UI and API, go2rtc,
-# capture from an RTSP stream, event recording, the event server's TLS WebSocket, the ML hook
-# writing detections to the event, running as PUID/PGID, sending mail, surviving a database outage,
-# and a clean restart.
+# capture from an RTSP stream, motion detection, the event server's TLS WebSocket (a client logs
+# in and receives the alarms), the ML hook writing detections to the event, running as PUID/PGID,
+# sending mail, surviving a database outage, and a clean restart.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -145,11 +145,15 @@ zm 'for i in $(seq 30); do
     done; exit 1' || fail "no TLS WebSocket on 9000"
 
 step "test camera"
-# The test frame is a COCO sample photo of a bus with people, so the detector has something to find.
-# -g 5 puts a keyframe every second; zmwatch restarts a camera that shows no image for 45s.
-zm 'curl -fsSL --retry 3 -o /var/cache/zoneminder/test.jpg https://ultralytics.com/images/bus.jpg \
-    && ffmpeg -loglevel error -y -loop 1 -i /var/cache/zoneminder/test.jpg -t 600 -r 5 -vf scale=640:-2 \
-        -c:v libx264 -g 5 -pix_fmt yuv420p /var/cache/zoneminder/test.mp4' || fail "make test video"
+# The camera loops a 30 s scene: 20 s of a heavily blurred COCO photo of a bus with people, then
+# 10 s of the sharp photo. Each change is motion, so ZoneMinder opens events by itself, and the
+# sharp frames give the detector something to find. -g 5 puts a keyframe every second; zmwatch
+# restarts a camera that shows no image for 45s.
+zm 'cd /var/cache/zoneminder && curl -fsSL --retry 3 -o test.jpg https://ultralytics.com/images/bus.jpg \
+    && ffmpeg -loglevel error -y -loop 1 -t 20 -i test.jpg -loop 1 -t 10 -i test.jpg -filter_complex \
+        "[0]scale=640:-2,boxblur=40:4[a];[1]scale=640:-2[b];[a][b]concat=n=2:v=1,format=yuv420p" \
+        -r 5 -c:v libx264 -g 5 cycle.mp4 \
+    && ffmpeg -loglevel error -y -stream_loop 19 -i cycle.mp4 -c copy test.mp4' || fail "make test video"
 zm 'curl -fsS -X PUT "http://127.0.0.1:1984/api/streams?name=test&src=ffmpeg:/var/cache/zoneminder/test.mp4%23video=copy"' \
     || fail "go2rtc stream"
 # The usage statistics prompt blocks image URLs until answered. Test shortcut for clicking "decline".
@@ -169,22 +173,42 @@ for ((i = 0; i < 60; i += 3)); do
 done
 python3 -c "import sys;sys.exit(0 if $fps > 0 else 1)" || fail "monitor is not capturing"
 echo "capturing at $fps fps"
+# A monitor made through the API has no zones, so add the web UI's default: the whole frame,
+# alarm at 3% of the pixels.
+zones=$(api zones/forMonitor/1.json | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["zones"]))')
+if [[ "$zones" == 0 ]]; then
+    api zones.json -X POST --data-urlencode "Zone[MonitorId]=1" --data-urlencode "Zone[Name]=All" \
+        --data-urlencode "Zone[Type]=Active" --data-urlencode "Zone[Units]=Percent" \
+        --data-urlencode "Zone[NumCoords]=4" --data-urlencode "Zone[Coords]=0,0 639,0 639,853 0,853" \
+        --data-urlencode "Zone[Area]=546560" --data-urlencode "Zone[AlarmRGB]=16711680" \
+        --data-urlencode "Zone[CheckMethod]=Blobs" --data-urlencode "Zone[MinPixelThreshold]=25" \
+        --data-urlencode "Zone[MinAlarmPixels]=16396" --data-urlencode "Zone[MaxAlarmPixels]=409920" \
+        --data-urlencode "Zone[FilterX]=3" --data-urlencode "Zone[FilterY]=3" \
+        --data-urlencode "Zone[MinFilterPixels]=16396" --data-urlencode "Zone[MaxFilterPixels]=409920" \
+        --data-urlencode "Zone[MinBlobPixels]=10931" --data-urlencode "Zone[MinBlobs]=1" >/dev/null \
+        || fail "add zone"
+    # zmc reads zones when it starts.
+    zm 'zmdc.pl restart zmc -m 1 >/dev/null'
+fi
 
-step "event + object detection"
+step "motion, object detection and the event server"
 # The event server only picks up new monitors on its periodic reload, so restart it.
 zm 'zmdc.pl restart zmeventnotification.pl >/dev/null && sleep 8'
-api monitors/alarm/id:1/command:on.json -o /dev/null || fail "forcing an alarm failed"
-sleep 12
-api monitors/alarm/id:1/command:off.json -o /dev/null || fail "cancelling the alarm failed"
-notes=""
-for ((i = 0; i < 90; i += 5)); do
-    notes=$(api events.json \
-        | python3 -c 'import json,sys;e=json.load(sys.stdin)["events"];print(e[-1]["Event"]["Notes"] if e else "")')
-    [[ "$notes" == *detected:* ]] && break
-    sleep 5
-done
-echo "event notes: $notes"
-[[ "$notes" == *detected:*bus* || "$notes" == *detected:*person* ]] || fail "no detections written to the event"
+# A zmNinja-style client: logs in over the WebSocket and waits for the next event's start and end
+# alarms. The event server sends the start alarm after the hook's detection, with the result in it.
+# The event server checks passwords even when ZoneMinder's auth is off; admin's is then "admin".
+es_pass=admin
+[[ "$auth" == on ]] && es_pass=$admin_pass
+es=$(compose exec -T -e ES_USER="$admin_user" -e ES_PASS="$es_pass" zoneminder \
+    perl - 1 180 < tests/es-client.pl 2>&1) || fail "event server client: $es"
+echo "$es"
+start=$(grep -m1 '^start ' <<<"$es")
+[[ "$start" == *detected:*bus* || "$start" == *detected:*person* ]] || fail "start alarm has no detection: $start"
+eid=$(awk '{print $2}' <<<"$start")
+notes=$(api "events/$eid.json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["event"]["Event"]["Notes"])')
+echo "event $eid notes: $notes"
+[[ "$notes" == *detected:* ]] || fail "no detections written to event $eid"
+[[ "$notes" == *Motion* ]] || fail "event $eid wasn't started by motion detection"
 
 step "PUID/PGID and mail"
 [[ "$(zm 'id -u www-data'):$(zm 'id -g www-data')" == 1234:1234 ]] || fail "www-data is not 1234:1234"
@@ -219,5 +243,6 @@ wait_healthy zoneminder
 logs=$(compose logs --no-color zoneminder)
 [[ $(grep -c 'empty database, loading' <<< "$logs") == 1 ]] || fail "schema should load once, on first start only"
 [[ $(grep -c 'running zmupdate.pl' <<< "$logs") -ge 1 ]] || fail "second start did not run zmupdate.pl"
+! grep -m3 'PHP Fatal' <<< "$logs" || fail "PHP fatal errors in the log"
 
 echo; echo "PASS: ZoneMinder $version"

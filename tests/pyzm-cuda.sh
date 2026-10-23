@@ -1,10 +1,11 @@
 #!/bin/bash
-# Test the pyzm-serve CUDA image on a machine without a GPU, as CI runs it.
-#   tests/pyzm-cuda.sh [image]        default zoneminder-pyzm-serve:cuda
+# Test the pyzm-serve CUDA image. CI runs it on a machine without a GPU.
+#   tests/pyzm-cuda.sh [image]          default zoneminder-pyzm-serve:cuda
+#   GPU=1 tests/pyzm-cuda.sh [image]    also detect on the GPU (needs the NVIDIA container toolkit)
 #
 # Checks that OpenCV in the image has CUDA and cuDNN, that the container refuses to start when
-# asked for the GPU and none is visible, and that detection works on the CPU. Nothing here runs
-# on a GPU, so it can't prove GPU inference works.
+# asked for the GPU and none is visible, and that detection works on the CPU. With GPU=1 it also
+# checks detection runs on the GPU and prints how long each inference takes on both.
 set -euo pipefail
 
 image="${1:-zoneminder-pyzm-serve:cuda}"
@@ -31,20 +32,35 @@ if out=$(docker run --rm -e PYZM_PROCESSOR=gpu "$image" 2>&1); then
 fi
 grep -q "sees no CUDA device" <<<"$out" || fail "unexpected output: $out"
 
-step "detection on the CPU"
-docker run -d --name "$name" -p "127.0.0.1:$port:5000" -e PYZM_PROCESSOR=cpu "$image" >/dev/null
-for _ in $(seq 60); do
-    status=$(docker inspect -f '{{.State.Health.Status}}' "$name" 2>/dev/null || echo gone)
-    [[ "$status" == healthy ]] && break
-    [[ "$status" == gone ]] && fail "container exited"
-    sleep 5
-done
-[[ "$status" == healthy ]] || fail "not healthy after 5 minutes: $status"
-
 curl -fsSL --retry 3 -o "$work/bus.jpg" https://ultralytics.com/images/bus.jpg
-result=$(curl -fsS --max-time 60 "http://127.0.0.1:$port/infer" \
-    -F type=object -F "name=YOLO ONNX" -F "image=@$work/bus.jpg;type=image/jpeg")
-grep -q '"bus"' <<<"$result" || fail "no bus detected: $result"
-docker exec "$name" pyzm-healthcheck
+
+detect() {  # detect <cpu|gpu> [docker run args...]
+    local processor=$1; shift
+    step "detection on the $processor"
+    docker rm -f "$name" >/dev/null 2>&1 || true
+    docker run -d --name "$name" -p "127.0.0.1:$port:5000" -e PYZM_PROCESSOR="$processor" "$@" "$image" >/dev/null
+    for _ in $(seq 60); do
+        status=$(docker inspect -f '{{.State.Health.Status}}' "$name" 2>/dev/null || echo gone)
+        [[ "$status" == healthy ]] && break
+        [[ "$status" == gone ]] && fail "container exited"
+        sleep 5
+    done
+    [[ "$status" == healthy ]] || fail "not healthy after 5 minutes: $status"
+    local result
+    result=$(curl -fsS --max-time 60 "http://127.0.0.1:$port/infer" \
+        -F type=object -F "name=YOLO ONNX" -F "image=@$work/bus.jpg;type=image/jpeg")
+    grep -q '"bus"' <<<"$result" || fail "no bus detected: $result"
+    # The healthcheck fails if the model fell back from the processor it was asked for.
+    docker exec "$name" pyzm-healthcheck
+    for _ in $(seq 20); do
+        curl -fsS -o /dev/null -w '%{time_total}\n' --max-time 60 "http://127.0.0.1:$port/infer" \
+            -F type=object -F "name=YOLO ONNX" -F "image=@$work/bus.jpg;type=image/jpeg"
+    done | awk -v p="$processor" '{t += $1} END {printf "%s: %.0f ms per request (average of %d, including HTTP)\n", p, t * 1000 / NR, NR}'
+}
+
+detect cpu
+if [[ "${GPU:-}" == 1 ]]; then
+    detect gpu --gpus all
+fi
 
 echo "PASS: $image"

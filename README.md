@@ -80,6 +80,9 @@ apply to that first copy. Delete a file to have it regenerated.
   on, put your ZoneMinder login there as `ZM_USER` and `ZM_PASSWORD`, then restart the container.
 - `objectconfig.yml` points at `http://pyzm-serve:5000` and only runs object detection. Face and
   licence plate recognition need extra models or API keys, so they are left off.
+- The event server checks WebSocket logins (zmNinja, zmNinjaNG) against ZoneMinder's users even
+  while ZoneMinder's own authentication is off. A fresh 1.38 install's login is then `admin` /
+  `admin`, so change that password, or turn off `auth` in `zmeventnotification.yml`.
 - WebSocket TLS uses `/config/ssl/es.crt` and `es.key`. The container generates a self-signed pair
   if none exists. zmNinjaNG needs a real certificate for picture notifications, so put yours there.
 
@@ -234,10 +237,16 @@ and pyzm are pinned in `ARG` lines at the top of each Dockerfile.
 ## Testing
 
 `tests/smoke.sh` builds the `zm-es` and pyzm-serve images and starts the full stack. It then
-checks schema creation, the web UI and API, go2rtc, capture from an RTSP test stream, event
-recording, the event server's TLS WebSocket, and that the ML hook writes detections back to the
-event. Last, it restarts the container and checks that init runs cleanly a second time. It takes
-about five minutes once the images are cached.
+checks schema creation, the web UI and API, go2rtc, and capture from an RTSP test stream.
+
+The test camera loops a photo of a bus that switches between blurred and sharp, so ZoneMinder's
+own motion detection opens the events. `tests/es-client.pl` then acts like zmNinja: it logs in to
+the event server over the TLS WebSocket and waits for the alarms. The start alarm has to carry the
+hook's detection, and the event's notes have to show it.
+
+After that it checks PUID/PGID and mail, stops the database for 45 seconds, then restarts the
+container to check init runs cleanly a second time and that the log has no PHP fatal errors. It
+takes about five minutes once the images are cached.
 
 ```bash
 tests/smoke.sh                       # newest release
@@ -248,8 +257,9 @@ The `images` workflow runs it for both channels on every pull request, on every 
 once a day. On master it then builds amd64 and arm64 and pushes to Docker Hub.
 
 The `pyzm-serve-cuda` workflow builds the CUDA image when `release/pyzm-serve` changes and twice a
-week, runs `tests/pyzm-cuda.sh`, and pushes from master. The first build compiles OpenCV and takes
-one to three hours. Later builds reuse it from the Actions cache. To build it yourself:
+week, runs `tests/pyzm-cuda.sh`, and pushes from master. The first build compiles OpenCV for seven
+GPU generations. That took 6 minutes on a 16-core machine, and takes longer on GitHub's 4-core
+runners. Later builds reuse it from the Actions cache. To build it yourself:
 
 ```bash
 docker build -f release/pyzm-serve/Dockerfile.cuda -t pyzm-serve:cuda release/pyzm-serve
@@ -257,6 +267,7 @@ docker build -f release/pyzm-serve/Dockerfile.cuda -t pyzm-serve:cuda release/py
 docker build -f release/pyzm-serve/Dockerfile.cuda --build-arg CUDA_ARCH_BIN=8.6 \
   -t pyzm-serve:cuda release/pyzm-serve
 tests/pyzm-cuda.sh pyzm-serve:cuda
+GPU=1 tests/pyzm-cuda.sh pyzm-serve:cuda   # also detect on the GPU and compare timings
 ```
 
 Pushing needs the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets, with a token that can write
