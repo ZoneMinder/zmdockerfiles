@@ -72,6 +72,9 @@ jobs:
           {
             echo "channel=$ZM_CHANNEL"
             echo "version=$ZM_VERSION"
+            # Nightly debs end in a per-arch CI run ID (1.39.41~20261023.190.<run>.1-trixie1),
+            # so the multi-arch build pins everything before it and lets apt match the rest.
+            if [ "${{ matrix.channel }}" = master ]; then echo "pin=${ZM_VERSION%.*.*-*}.*"; else echo "pin=$ZM_VERSION"; fi
             echo "push=$push"
             echo "zm_tags<<EOF"; tags ""; echo "EOF"
             echo "es_tags<<EOF"; tags "-es"; echo "EOF"
@@ -105,7 +108,7 @@ jobs:
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             ZM_CHANNEL=${{ steps.zm.outputs.channel }}
-            ZM_VERSION=${{ steps.zm.outputs.version }}
+            ZM_VERSION=${{ steps.zm.outputs.pin }}
           tags: ${{ steps.zm.outputs.zm_tags }}
           cache-from: type=gha,scope=${{ matrix.channel }}
           cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
@@ -121,7 +124,7 @@ jobs:
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             ZM_CHANNEL=${{ steps.zm.outputs.channel }}
-            ZM_VERSION=${{ steps.zm.outputs.version }}
+            ZM_VERSION=${{ steps.zm.outputs.pin }}
           tags: ${{ steps.zm.outputs.es_tags }}
           cache-from: type=gha,scope=${{ matrix.channel }}
           cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
