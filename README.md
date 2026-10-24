@@ -282,3 +282,15 @@ Create those repos first and give the CI user write access to them, as for the r
 
 Use the [forums](https://forums.zoneminder.com/) for questions. For bugs in these images, open an
 issue with your compose file (passwords removed) and the output of `docker compose logs zoneminder`.
+
+## Docker Hub pages
+
+The overview and short description of each Docker Hub repo come from `dockerhub/*.md` and
+`.github/workflows/dockerhub-description.yml`. Edit them there, and the change goes live when it
+reaches master. Editing a page on hub.docker.com directly gets overwritten by the next run.
+
+## License
+
+GPL-2.0-or-later, the same as ZoneMinder. See [LICENSE](LICENSE). The images contain other
+software under its own licenses, including Debian packages, zmeventnotificationNg and pyzm, and
+the YOLO model weights that pyzm-serve downloads on first start (Ultralytics, AGPL-3.0).

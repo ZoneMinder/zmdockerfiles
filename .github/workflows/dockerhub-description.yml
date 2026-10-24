@@ -1,0 +1,42 @@
+name: dockerhub-description
+
+# Sets the short description and overview of each Docker Hub repo from dockerhub/*.md,
+# so the pages change through a PR like everything else.
+#
+# Docker Hub's description API wants a personal access token with Read, Write, Delete scope.
+# A push-only token or an organisation access token gets refused. This workflow fails then,
+# but image publishing in images.yml is unaffected.
+
+on:
+  push:
+    branches: [master]
+    paths: ['dockerhub/**', '.github/workflows/dockerhub-description.yml']
+  workflow_dispatch:
+
+jobs:
+  description:
+    name: ${{ matrix.repo }}
+    if: github.repository == 'ZoneMinder/zmdockerfiles'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repo: zoneminder/zoneminder
+            file: dockerhub/zoneminder.md
+            short: ZoneMinder CCTV/NVR on Debian, amd64 and arm64. Needs MariaDB. -es tags add the event server.
+          - repo: zoneminderhq/zoneminder
+            file: dockerhub/zoneminderhq.md
+            short: Mirror of zoneminder/zoneminder (ZoneMinder CCTV/NVR). Use that name for new installs.
+          - repo: zoneminder/pyzm-serve
+            file: dockerhub/pyzm-serve.md
+            short: Object detection server for the ZoneMinder event server hook. CPU, or CUDA on NVIDIA GPUs.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ matrix.repo }}
+          short-description: ${{ matrix.short }}
+          readme-filepath: ${{ matrix.file }}
