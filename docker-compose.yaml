@@ -52,6 +52,8 @@ services:
       # Run as this user and group instead of www-data (33:33), e.g. to match bind mount owners.
       PUID: ${PUID:-}
       PGID: ${PGID:-}
+      # The address browsers use, e.g. http://zm.lan:8080. Needed for go2rtc live view (README).
+      ZM_PUBLIC_URL: ${ZM_PUBLIC_URL:-}
       # Outgoing mail. Leave SMTP_HOST empty to skip.
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-}
@@ -64,7 +66,6 @@ services:
       ZMES_ML_GATEWAY: ${ZMES_ML_GATEWAY:-http://pyzm-serve:5000}
     ports:
       - "${ZM_HTTP_PORT:-8080}:80"
-      - "${GO2RTC_API_PORT:-1984}:1984"
       - "${GO2RTC_WEBRTC_PORT:-8555}:8555/tcp"
       - "${GO2RTC_WEBRTC_PORT:-8555}:8555/udp"
       - "${ZMES_PORT:-9000}:9000"
