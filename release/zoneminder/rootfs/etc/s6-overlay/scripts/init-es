@@ -43,6 +43,13 @@ for f in zmeventnotification.yml secrets.yml objectconfig.yml es_rules.yml; do
     ln -sfn "/config/es/$f" "/etc/zm/$f"
 done
 
+# ZMES_USE_HOOKS only applies when the config is first copied. Starting once without hooks and
+# then with ZMES_USE_HOOKS=yes would otherwise leave detection off without a word.
+hooks=$(sed -n 's/^\s*use_hooks:\s*"\?\([a-z]*\)"\?.*/\1/p' /config/es/zmeventnotification.yml | head -1)
+if [[ "${ZMES_USE_HOOKS:-no}" == yes && "$hooks" != yes ]]; then
+    log "WARNING: ZMES_USE_HOOKS=yes, but /config/es/zmeventnotification.yml from an earlier start has use_hooks: \"$hooks\". Set it to \"yes\" there, or delete the file to have it regenerated, then restart."
+fi
+
 # Push tokens survive container rebuilds
 if [[ -d /var/lib/zmeventnotification/push && ! -L /var/lib/zmeventnotification/push ]]; then
     cp -an /var/lib/zmeventnotification/push/. /config/es/push/ 2>/dev/null || true

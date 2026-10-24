@@ -6,9 +6,13 @@ source /etc/s6-overlay/scripts/common.sh
 
 timeout="${ZM_DB_WAIT_TIMEOUT:-180}"
 log "waiting up to ${timeout}s for database at $ZM_DB_HOST"
-for (( i = 0; ; i += 2 )); do
-    if mariadb --defaults-extra-file="$MYCNF" -e 'SELECT 1' >/dev/null 2>&1; then break; fi
-    (( i >= timeout )) && { mariadb --defaults-extra-file="$MYCNF" -e 'SELECT 1' || true; die "database not reachable"; }
+# A failed attempt can itself take seconds (DNS, TCP), so check the clock rather than count tries.
+deadline=$(( SECONDS + timeout ))
+until mariadb --defaults-extra-file="$MYCNF" --connect-timeout=5 -e 'SELECT 1' >/dev/null 2>&1; do
+    if (( SECONDS >= deadline )); then
+        mariadb --defaults-extra-file="$MYCNF" --connect-timeout=5 -e 'SELECT 1' || true
+        die "database not reachable"
+    fi
     sleep 2
 done
 

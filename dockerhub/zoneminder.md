@@ -16,7 +16,7 @@ docker compose up -d
 
 Open http://localhost:8080/zm and finish ZoneMinder's first-run setup:
 
-- 1.38 starts with authentication off. Turn it on in Options > System > OPT_USE_AUTH, then change the `admin` password (default `admin`) under Options > Users.
+- 1.38 starts with authentication off. Turn on OPT_USE_AUTH under Options > Authentication, log in as `admin` / `admin`, then change that password under Options > Users.
 - Answer the usage statistics prompt. Until you do, the web UI and image URLs redirect to it.
 
 ## Tags
@@ -35,8 +35,7 @@ To run the event server, set `ZM_TAG=latest-es` in `.env`. For object detection,
 
 | Port | |
 |---|---|
-| 80 | Web UI (8080 on the host in the compose file) |
-| 1984 | go2rtc API |
+| 80 | Web UI (8080 on the host in the compose file), with go2rtc under `/zm/go2rtc/` |
 | 8555 tcp/udp | WebRTC |
 | 9000 | Event server WebSocket (`-es` tags) |
 
@@ -55,6 +54,7 @@ To run the event server, set `ZM_TAG=latest-es` in `.env`. For object detection,
 | `ZM_DB_NAME` / `ZM_DB_USER` | `zm` / `zmuser` | |
 | `ZM_DB_PASS` / `ZM_DB_PASS_FILE` | required | Use the `_FILE` form with Docker secrets |
 | `TZ` | `UTC` | Give the database the same value |
+| `ZM_PUBLIC_URL` | | Address browsers use, e.g. `http://zm.lan:8080`. Set GO2RTC_PATH to it plus `/zm/go2rtc` for go2rtc live view. |
 | `PUID` / `PGID` | `33` / `33` | Match the owner of your bind mounts |
 | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | | Outgoing mail through msmtp |
 

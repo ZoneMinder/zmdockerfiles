@@ -31,7 +31,7 @@ ZM_TAG=${ZM_TAG:-es}
 PYZM_IMAGE=${PYZM_IMAGE:-zmsmoke-pyzm-serve}
 PYZM_TAG=${PYZM_TAG:-latest}
 ZM_HTTP_PORT=${ZM_HTTP_PORT:-18080}
-GO2RTC_API_PORT=11984
+ZM_PUBLIC_URL=http://zm.test:${ZM_HTTP_PORT:-18080}
 GO2RTC_WEBRTC_PORT=18555
 ZMES_PORT=19000
 ZMES_USE_HOOKS=yes
@@ -156,6 +156,15 @@ zm 'cd /var/cache/zoneminder && curl -fsSL --retry 3 -o test.jpg https://ultraly
     && ffmpeg -loglevel error -y -stream_loop 19 -i cycle.mp4 -c copy test.mp4' || fail "make test video"
 zm 'curl -fsS -X PUT "http://127.0.0.1:1984/api/streams?name=test&src=ffmpeg:/var/cache/zoneminder/test.mp4%23video=copy"' \
     || fail "go2rtc stream"
+# Live view: browsers reach go2rtc through Apache at <ZM_PUBLIC_URL>/zm/go2rtc/, and zmc calls the
+# same URL from inside the container. The WebSocket has to pass go2rtc's origin check (101, not 403).
+zm 'url=$ZM_PUBLIC_URL/zm/go2rtc/api
+    curl -fsS -o /dev/null --max-time 10 "$url/streams" || { echo "$url/streams unreachable"; exit 1; }
+    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 -H "Origin: $ZM_PUBLIC_URL" \
+        -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" \
+        -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" "$url/ws?src=test" || true)
+    [[ "$code" == 101 ]] || { echo "go2rtc WebSocket answered $code"; exit 1; }' \
+    || fail "go2rtc live view through /zm/go2rtc/"
 # The usage statistics prompt blocks image URLs until answered. Test shortcut for clicking "decline".
 zm 'source /etc/s6-overlay/scripts/common.sh; sql "UPDATE Config SET Value=0 WHERE Name=\"ZM_SHOW_PRIVACY\""'
 api monitors.json -X POST \
