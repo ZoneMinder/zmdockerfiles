@@ -1,7 +1,7 @@
 name: pyzm-serve-cuda
 
 # Builds zoneminder/pyzm-serve:cuda (amd64 only), tests it with tests/pyzm-cuda.sh, and pushes
-# it from master. The OpenCV compile takes one to three hours the first time. After that the
+# it from master. The OpenCV compile takes about 25 minutes the first time. After that the
 # GitHub Actions cache holds it, and only a change to the Dockerfile ARGs or a new CUDA base
 # image rebuilds it. GitHub drops caches unused for 7 days, so the schedule runs twice a week
 # to keep it, and to pick up base image updates.
@@ -56,6 +56,7 @@ jobs:
           fi
           {
             echo "push=$push"
+            echo "pyzm=$pyzm"
             echo "tags=$PYZM_REPO:cuda $PYZM_REPO:$pyzm-cuda"
           } | tee -a "$GITHUB_OUTPUT"
 
@@ -70,6 +71,12 @@ jobs:
           pull: true
           load: true
           build-args: BUILD_JOBS=4
+          labels: |
+            org.opencontainers.image.title=pyzm-serve (CUDA)
+            org.opencontainers.image.description=Object detection server for the ZoneMinder event server, on NVIDIA GPUs
+            org.opencontainers.image.version=${{ steps.meta.outputs.pyzm }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
           tags: ${{ env.TEST_IMAGE }}
           cache-from: type=gha,scope=pyzm-cuda
           cache-to: type=gha,mode=max,scope=pyzm-cuda

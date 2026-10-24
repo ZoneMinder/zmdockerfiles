@@ -75,6 +75,8 @@ jobs:
             # Nightly debs end in a per-arch CI run ID (1.39.41~20261023.190.<run>.1-trixie1),
             # so the multi-arch build pins everything before it and lets apt match the rest.
             if [ "${{ matrix.channel }}" = master ]; then echo "pin=${ZM_VERSION%.*.*-*}.*"; else echo "pin=$ZM_VERSION"; fi
+            echo "upstream=$upstream"
+            echo "pyzm=$pyzm"
             echo "push=$push"
             echo "zm_tags<<EOF"; tags ""; echo "EOF"
             echo "es_tags<<EOF"; tags "-es"; echo "EOF"
@@ -109,6 +111,15 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             ZM_CHANNEL=${{ steps.zm.outputs.channel }}
             ZM_VERSION=${{ steps.zm.outputs.pin }}
+          labels: |
+            org.opencontainers.image.title=ZoneMinder
+            org.opencontainers.image.description=ZoneMinder video surveillance on Debian
+            org.opencontainers.image.version=${{ steps.zm.outputs.upstream }}
+            org.opencontainers.image.url=https://zoneminder.com
+            org.opencontainers.image.documentation=https://zoneminder.readthedocs.io
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=GPL-2.0-or-later
           tags: ${{ steps.zm.outputs.zm_tags }}
           cache-from: type=gha,scope=${{ matrix.channel }}
           cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
@@ -125,6 +136,15 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             ZM_CHANNEL=${{ steps.zm.outputs.channel }}
             ZM_VERSION=${{ steps.zm.outputs.pin }}
+          labels: |
+            org.opencontainers.image.title=ZoneMinder with event server
+            org.opencontainers.image.description=ZoneMinder video surveillance on Debian, with zmeventnotificationNg
+            org.opencontainers.image.version=${{ steps.zm.outputs.upstream }}
+            org.opencontainers.image.url=https://zoneminder.com
+            org.opencontainers.image.documentation=https://zoneminder.readthedocs.io
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=GPL-2.0-or-later
           tags: ${{ steps.zm.outputs.es_tags }}
           cache-from: type=gha,scope=${{ matrix.channel }}
           cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
@@ -136,6 +156,12 @@ jobs:
           context: release/pyzm-serve
           platforms: linux/amd64,linux/arm64
           push: true
+          labels: |
+            org.opencontainers.image.title=pyzm-serve
+            org.opencontainers.image.description=Object detection server for the ZoneMinder event server
+            org.opencontainers.image.version=${{ steps.zm.outputs.pyzm }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
           tags: ${{ steps.zm.outputs.pyzm_tags }}
           cache-from: type=gha,scope=pyzm-serve
           cache-to: type=gha,mode=max,scope=pyzm-serve
