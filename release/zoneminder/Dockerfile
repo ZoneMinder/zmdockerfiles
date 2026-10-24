@@ -87,7 +87,7 @@ RUN codename="$(. /etc/os-release && echo "$VERSION_CODENAME")" \
         ${hwaccel} \
     && rm -rf /var/lib/apt/lists/* \
     && a2enconf zoneminder \
-    && a2enmod rewrite cgi headers expires \
+    && a2enmod rewrite cgi headers expires proxy proxy_http \
     && a2dismod -f autoindex \
     && rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf \
     && sed -i -E "/^\s*(ErrorLog|CustomLog)/d" /etc/apache2/sites-available/000-default.conf
@@ -96,7 +96,7 @@ COPY rootfs/ /
 RUN a2enconf zm-docker \
     && chmod 755 /etc/s6-overlay/scripts/* /usr/local/bin/zm-healthcheck /etc/s6-overlay/s6-rc.d/*/run /etc/s6-overlay/s6-rc.d/*/finish
 
-EXPOSE 80 1984 8555
+EXPOSE 80 8555
 VOLUME ["/var/cache/zoneminder", "/var/log/zm", "/config"]
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \

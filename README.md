@@ -38,15 +38,21 @@ docker compose up -d
 
 Open http://localhost:8080/zm and finish ZoneMinder's own first-run setup:
 
-- 1.38 starts with authentication off. Turn it on in Options > System > OPT_USE_AUTH and change
-  the `admin` password (default `admin`) under Options > Users.
+- 1.38 starts with authentication off. Turn on OPT_USE_AUTH under Options > Authentication, log in
+  as `admin` / `admin`, then change that password under Options > Users.
 - 1.39 and later (the `dev` tags) start with authentication on. The first login page asks you to
   set the `admin` password or turn authentication off.
 - Answer the usage statistics prompt. Until you do, the web UI and image URLs redirect to it,
   and the event server hook can't fetch frames.
 
-To use go2rtc for live view, set Options > System > GO2RTC_PATH to an address the browser can
-reach, for example `http://zm.lan:1984/api`.
+For live view through go2rtc, set `ZM_PUBLIC_URL` in `.env` to the address you open ZoneMinder
+at, using a hostname, for example `http://zm.lan:8080`. Then set Options > System > GO2RTC_PATH
+to that address plus `/zm/go2rtc`, so `http://zm.lan:8080/zm/go2rtc`, and turn on go2rtc for each
+monitor. The container serves go2rtc under ZoneMinder's own address, so the browser's WebSocket
+passes go2rtc's origin check. `ZM_PUBLIC_URL` also points that hostname at the container itself,
+because ZoneMinder calls the same URL from inside it, and a host firewall often blocks a container
+from reaching its own published port. With an IP address instead of a name, that part depends on
+your firewall.
 
 `docker compose ps` shows the container's health. It reports unhealthy when Apache stops serving
 `/zm/`, when the `zmdc.pl` daemon is gone, or when the database doesn't answer.
@@ -71,6 +77,11 @@ ZM_TAG=latest-es ZMES_USE_HOOKS=yes docker compose --profile ml up -d
 ```
 
 Set these in `.env` rather than on the command line once you have settled on a setup.
+
+`ZMES_USE_HOOKS` only takes effect the first time the container creates the event server config.
+If you started without hooks and turn them on later, set `use_hooks: "yes"` in
+`/config/es/zmeventnotification.yml`, or delete that file, and restart. The log warns when the two
+disagree.
 
 On first start the container copies the event server config into the `config` volume, at
 `/config/es/`. Edit the files there and restart the container. The `ZMES_*` variables only
@@ -126,6 +137,7 @@ ZoneMinder container environment:
 | `ZM_DB_PASS` / `ZM_DB_PASS_FILE` | required | Use the `_FILE` form with Docker secrets |
 | `ZM_DB_SSL_CA_CERT`, `ZM_DB_SSL_CLIENT_CERT`, `ZM_DB_SSL_CLIENT_KEY` | | TLS to the database |
 | `ZM_SERVER_HOST` | | Server name for multi-server installs |
+| `ZM_PUBLIC_URL` | | The address browsers use, e.g. `http://zm.lan:8080`. Needed for go2rtc live view, see above. |
 | `TZ` | `UTC` | Applied to the OS and PHP. Give the database the same value, as the compose file does. |
 | `ZM_ES_ENABLE` | `1` in `-es` images | Writes OPT_USE_EVENTNOTIFICATION to `conf.d`, which takes priority over the UI setting |
 | `ZM_DB_WAIT_TIMEOUT` | `180` | Seconds to wait for the database |
@@ -186,7 +198,8 @@ Volumes:
 | `/config` | `go2rtc.yaml`, event server config and certificates |
 | `/dev/shm` | tmpfs, 1 GiB by default (`ZM_SHM_SIZE`). ZoneMinder keeps each monitor's frame buffer here. |
 
-Ports: 80 (web), 1984 (go2rtc API), 8555 tcp/udp (WebRTC), 9000 (event server).
+Ports: 80 (web, with go2rtc's API and page under `/zm/go2rtc/`), 8555 tcp/udp (WebRTC),
+9000 (event server).
 
 ### Hardware decoding
 
@@ -201,10 +214,13 @@ database from the old container and load it into the new one:
 
 ```bash
 docker exec old-zoneminder mysqldump --single-transaction --routines --triggers zm > zm.sql
-docker compose up -d db
-docker compose exec -T db mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" zm < zm.sql
+docker compose up -d --wait db
+docker compose exec -T db sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" zm' < zm.sql
 docker compose up -d
 ```
+
+`old-zoneminder` is the old container's name. The single quotes matter: the root password is in
+`.env`, which the `db` container has but your shell doesn't.
 
 `zmupdate.pl` upgrades the schema to 1.38 on first start, and the logs show each step. Events
 live in the same place (`/var/cache/zoneminder/events`), so point the `events` volume at the old
