@@ -12,6 +12,8 @@ name: images
 #
 # Images: zoneminder/zoneminder (mirrored to zoneminderhq/zoneminder, the name the old images used)
 #         zoneminder/pyzm-serve
+# Every tag is also published to GitHub's registry as ghcr.io/zoneminder/zoneminder and
+# ghcr.io/zoneminder/pyzm-serve, pushed with the workflow's GITHUB_TOKEN.
 
 on:
   push:
@@ -29,8 +31,9 @@ on:
         default: false
 
 env:
-  REPOS: zoneminder/zoneminder zoneminderhq/zoneminder
-  PYZM_REPO: zoneminder/pyzm-serve
+  # The first repo in each list receives the per-arch pushes; the merge job tags all of them.
+  REPOS: zoneminder/zoneminder zoneminderhq/zoneminder ghcr.io/zoneminder/zoneminder
+  PYZM_REPOS: zoneminder/pyzm-serve ghcr.io/zoneminder/pyzm-serve
   BASE_IMAGE: debian:stable-slim
 
 jobs:
@@ -61,7 +64,7 @@ jobs:
           pyzm=$(sed -n 's/^ARG PYZM_VERSION=//p' release/pyzm-serve/Dockerfile)
           if [ "${{ inputs.test_push }}" = true ]; then
             REPOS=$(for r in $REPOS; do printf '%s-test ' "$r"; done)
-            PYZM_REPO="$PYZM_REPO-test"
+            PYZM_REPOS=$(for r in $PYZM_REPOS; do printf '%s-test ' "$r"; done)
           fi
           push=false
           if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
@@ -81,10 +84,10 @@ jobs:
             echo "pyzm=$pyzm"
             echo "push=$push"
             echo "zm_repo=${REPOS%% *}"
-            echo "pyzm_repo=$PYZM_REPO"
+            echo "pyzm_repo=${PYZM_REPOS%% *}"
             echo "zm_tags=$(tags "")"
             echo "es_tags=$(tags "-es")"
-            echo "pyzm_tags=$PYZM_REPO:latest $PYZM_REPO:$pyzm"
+            echo "pyzm_tags=$(for r in $PYZM_REPOS; do printf '%s ' "$r:latest" "$r:$pyzm"; done)"
           } | tee meta/meta.env
 
       - uses: actions/upload-artifact@v4
@@ -238,6 +241,8 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      packages: write   # push to ghcr.io
     strategy:
       fail-fast: false
       matrix:
@@ -265,6 +270,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/login-action@v3
+        if: steps.meta.outputs.push == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Tag multi-arch images
         if: steps.meta.outputs.push == 'true'
@@ -275,8 +286,11 @@ jobs:
           ZM_TAGS: ${{ steps.meta.outputs.zm_tags }}
           ES_TAGS: ${{ steps.meta.outputs.es_tags }}
           PYZM_TAGS: ${{ steps.meta.outputs.pyzm_tags }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          # merge <image> <repo> <tags>: one index from both architectures' digests, under every tag
+          # merge <image> <repo> <tags> <description>: one index from both architectures' digests,
+          # under every tag. imagetools copies the images into the other repos and registries.
+          # GHCR reads the source annotation on the index to link the package to this repo.
           merge() {
             local sources=() tags=() arch f
             for arch in amd64 arm64; do
@@ -285,9 +299,14 @@ jobs:
               sources+=("$2@$(cat "$f")")
             done
             for t in $3; do tags+=(-t "$t"); done
-            docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+            docker buildx imagetools create "${tags[@]}" \
+              --annotation "index:org.opencontainers.image.source=$SOURCE" \
+              --annotation "index:org.opencontainers.image.description=$4" \
+              "${sources[@]}"
             docker buildx imagetools inspect "${3%% *}"
           }
-          merge zm "$ZM_REPO" "$ZM_TAGS"
-          merge zm-es "$ZM_REPO" "$ES_TAGS"
-          if [ "$CHANNEL" = release ]; then merge pyzm "$PYZM_REPO" "$PYZM_TAGS"; fi
+          merge zm "$ZM_REPO" "$ZM_TAGS" "ZoneMinder video surveillance on Debian"
+          merge zm-es "$ZM_REPO" "$ES_TAGS" "ZoneMinder video surveillance on Debian, with zmeventnotificationNg"
+          if [ "$CHANNEL" = release ]; then
+            merge pyzm "$PYZM_REPO" "$PYZM_TAGS" "Object detection server for the ZoneMinder event server"
+          fi

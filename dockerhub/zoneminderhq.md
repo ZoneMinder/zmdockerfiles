@@ -27,6 +27,8 @@ Open http://localhost:8080/zm and finish ZoneMinder's first-run setup. The compo
 | `dev`, `dev-es` | Nightly build of ZoneMinder master. Don't run it on a system you rely on. |
 | `latest-el7`, `latest-ubuntu18.04` | **Old, unmaintained.** ZoneMinder 1.36 from 2021, amd64 only, with MySQL inside the container. Kept so existing installs don't break. Don't use them for new installs. |
 
+The current tags, not the 2021 ones, are also on GitHub's registry as `ghcr.io/zoneminder/zoneminder`.
+
 See [zoneminder/zoneminder](https://hub.docker.com/r/zoneminder/zoneminder) for ports, volumes and settings.
 
 ## Moving off `latest-el7` or `latest-ubuntu18.04`

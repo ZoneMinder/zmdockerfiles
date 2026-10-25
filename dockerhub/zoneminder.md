@@ -27,6 +27,8 @@ Open http://localhost:8080/zm and finish ZoneMinder's first-run setup:
 | `latest-es`, `1.38-es`, `1.38.6-es` | The same, plus the [zmeventnotificationNg](https://github.com/ZoneMinder/zmeventnotificationNg) event server (push, WebSocket, MQTT, object detection hook) |
 | `dev`, `dev-es` | Nightly build of ZoneMinder master (odd minor versions such as 1.39). Don't run it on a system you rely on. |
 
+The same tags are on GitHub's registry as `ghcr.io/zoneminder/zoneminder`.
+
 CI rebuilds the images every day. `latest` moves to the next minor release (1.40, 1.42) as soon as zmrepo publishes it. Pin `1.38` if you want to choose when to upgrade.
 
 To run the event server, set `ZM_TAG=latest-es` in `.env`. For object detection, also set `ZMES_USE_HOOKS=yes` and start with `docker compose --profile ml up -d`, which adds the [zoneminder/pyzm-serve](https://hub.docker.com/r/zoneminder/pyzm-serve) container.
