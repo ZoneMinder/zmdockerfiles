@@ -56,7 +56,7 @@ To run the event server, set `ZM_TAG=latest-es` in `.env`. For object detection,
 | `ZM_DB_NAME` / `ZM_DB_USER` | `zm` / `zmuser` | |
 | `ZM_DB_PASS` / `ZM_DB_PASS_FILE` | required | Use the `_FILE` form with Docker secrets |
 | `TZ` | `UTC` | Give the database the same value |
-| `ZM_PUBLIC_URL` | | Address browsers use, e.g. `http://zm.lan:8080`. Set GO2RTC_PATH to it plus `/zm/go2rtc` for go2rtc live view. |
+| `ZM_PUBLIC_URL` | | Address browsers use, e.g. `http://zm.lan:8080`. Set GO2RTC_PATH to it plus `/zm/go2rtc` for go2rtc live view. go2rtc streams need no login, so keep the port on a trusted network. |
 | `PUID` / `PGID` | `33` / `33` | Match the owner of your bind mounts |
 | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | | Outgoing mail through msmtp |
 

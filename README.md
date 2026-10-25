@@ -55,8 +55,22 @@ to that address plus `/zm/go2rtc`, so `http://zm.lan:8080/zm/go2rtc`, and turn o
 monitor. The container serves go2rtc under ZoneMinder's own address, so the browser's WebSocket
 passes go2rtc's origin check. `ZM_PUBLIC_URL` also points that hostname at the container itself,
 because ZoneMinder calls the same URL from inside it, and a host firewall often blocks a container
-from reaching its own published port. With an IP address instead of a name, that part depends on
-your firewall.
+from reaching its own published port.
+
+go2rtc's API has no login of its own, and ZoneMinder's login doesn't cover it. So from outside
+the container, `/zm/go2rtc/` only serves what live view needs: the WebSocket for a monitor's
+stream and the HLS fallback. The rest of the API is refused, including go2rtc's config, adding
+streams, and its own web page. That means ZoneMinder's own calls must come from inside the container:
+- **Hostname in `ZM_PUBLIC_URL`:** this works with no extra setup.
+- **IP address:** ZoneMinder's calls arrive through the host, so go2rtc refuses them and live
+  view stays blank. Use a hostname.
+- **https behind a reverse proxy:** set `GO2RTC_API_ALLOW` to the proxy's address.
+
+**go2rtc live streams are not protected by ZoneMinder's login.** Anyone who can reach the web port
+can watch any monitor with go2rtc enabled, because the browser connects without credentials and
+the IDs are small numbers. Keep the port on a network you trust, or put an authenticating
+reverse proxy or a VPN in front of it. Monitors without go2rtc use ZoneMinder's own streaming,
+which does check the login.
 
 `docker compose ps` shows the container's health. It reports unhealthy when Apache stops serving
 `/zm/`, when the `zmdc.pl` daemon is gone, or when the database doesn't answer.
@@ -142,6 +156,7 @@ ZoneMinder container environment:
 | `ZM_DB_SSL_CA_CERT`, `ZM_DB_SSL_CLIENT_CERT`, `ZM_DB_SSL_CLIENT_KEY` | | TLS to the database |
 | `ZM_SERVER_HOST` | | Server name for multi-server installs |
 | `ZM_PUBLIC_URL` | | The address browsers use, e.g. `http://zm.lan:8080`. Needed for go2rtc live view, see above. |
+| `GO2RTC_API_ALLOW` | | IP addresses or CIDR ranges, space separated, that get go2rtc's whole API through `/zm/go2rtc/`. Set it to an https reverse proxy's address. |
 | `TZ` | `UTC` | Applied to the OS and PHP. Give the database the same value, as the compose file does. |
 | `ZM_ES_ENABLE` | `1` in `-es` images | Writes OPT_USE_EVENTNOTIFICATION to `conf.d`, which takes priority over the UI setting |
 | `ZM_DB_WAIT_TIMEOUT` | `180` | Seconds to wait for the database |
@@ -202,7 +217,7 @@ Volumes:
 | `/config` | `go2rtc.yaml`, event server config and certificates |
 | `/dev/shm` | tmpfs, 1 GiB by default (`ZM_SHM_SIZE`). ZoneMinder keeps each monitor's frame buffer here. |
 
-Ports: 80 (web, with go2rtc's API and page under `/zm/go2rtc/`), 8555 tcp/udp (WebRTC),
+Ports: 80 (web, with go2rtc's live view under `/zm/go2rtc/`), 8555 tcp/udp (WebRTC),
 9000 (event server).
 
 ### Hardware decoding

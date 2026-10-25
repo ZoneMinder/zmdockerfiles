@@ -165,6 +165,22 @@ zm 'url=$ZM_PUBLIC_URL/zm/go2rtc/api
         -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" "$url/ws?src=test" || true)
     [[ "$code" == 101 ]] || { echo "go2rtc WebSocket answered $code"; exit 1; }' \
     || fail "go2rtc live view through /zm/go2rtc/"
+# From outside the container, go2rtc's unauthenticated API is closed except the live view
+# WebSocket for ZoneMinder's stream names.
+outside() {  # outside <expected code> <description> <curl args...>
+    local want=$1 what=$2 code; shift 2
+    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$@" || true)
+    [[ "$code" == "$want" ]] || fail "outside: $what answered $code, expected $want"
+}
+g2=http://127.0.0.1:${ZM_HTTP_PORT:-18080}/zm/go2rtc
+wsh=(-H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13"
+     -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Origin: http://127.0.0.1:${ZM_HTTP_PORT:-18080}")
+outside 403 "go2rtc config" "$g2/api/config"
+outside 403 "go2rtc stream list" "$g2/api/streams"
+outside 403 "adding a go2rtc stream" -X PUT "$g2/api/streams?name=9&src=rtsp://example"
+outside 403 "go2rtc web page" "$g2/"
+outside 403 "WebSocket with a URL as source" "${wsh[@]}" "$g2/api/ws?src=rtsp://example"
+outside 101 "WebSocket for a monitor stream" "${wsh[@]}" "$g2/api/ws?src=1_CameraDirectPrimary"
 # The usage statistics prompt blocks image URLs until answered. Test shortcut for clicking "decline".
 zm 'source /etc/s6-overlay/scripts/common.sh; sql "UPDATE Config SET Value=0 WHERE Name=\"ZM_SHOW_PRIVACY\""'
 api monitors.json -X POST \

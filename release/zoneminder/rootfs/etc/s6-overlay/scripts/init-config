@@ -108,6 +108,8 @@ if [[ ! -f /config/go2rtc.yaml ]]; then
     cat > /config/go2rtc.yaml <<'YAML'
 # go2rtc config. ZoneMinder adds camera streams through the API at runtime.
 # Browsers reach the API through Apache at /zm/go2rtc/, so it only listens inside the container.
+# Apache only lets outside clients open live view streams. Those streams need no login, even
+# with ZoneMinder's authentication on, so keep ZoneMinder's port on a trusted network.
 # Docs: https://github.com/AlexxIT/go2rtc#configuration
 api:
   listen: "127.0.0.1:1984"
@@ -131,8 +133,10 @@ if [[ -n "${ZM_PUBLIC_URL:-}" ]]; then
     pub_scheme=${BASH_REMATCH[1]} pub_host=${BASH_REMATCH[2]} pub_port=${BASH_REMATCH[4]:-}
     if [[ "$pub_scheme" == https ]]; then
         log "ZM_PUBLIC_URL is https, so a proxy in front of the container answers it. ZoneMinder's daemons must be able to reach $pub_host."
+        [[ -n "${GO2RTC_API_ALLOW:-}" ]] \
+            || log "WARNING: set GO2RTC_API_ALLOW to the proxy's address, or go2rtc refuses zmc's stream registrations and live view stays blank."
     elif [[ "$pub_host" =~ ^[0-9.]+$ ]]; then
-        log "WARNING: ZM_PUBLIC_URL uses an IP address. ZoneMinder's daemons then reach it through the host, which a host firewall can block. A hostname avoids that."
+        log "WARNING: ZM_PUBLIC_URL uses an IP address. ZoneMinder's daemons then reach it through the host, not over loopback, so go2rtc refuses their stream registrations and live view stays blank. Use a hostname."
     else
         grep -qE "^127\.0\.0\.1[[:space:]]+${pub_host//./\\.}\$" /etc/hosts || echo "127.0.0.1 $pub_host" >> /etc/hosts
         if [[ -n "$pub_port" && "$pub_port" != 80 ]]; then
@@ -140,6 +144,18 @@ if [[ -n "${ZM_PUBLIC_URL:-}" ]]; then
         fi
         log "ZM_PUBLIC_URL: $pub_host${pub_port:+:$pub_port} points at this container"
     fi
+fi
+
+# Addresses besides the container itself that get go2rtc's whole API through /zm/go2rtc/.
+# zm-docker.conf includes this file in its access rules.
+allow_conf=/etc/apache2/zm-go2rtc-allow.conf
+echo "# Written by init-config from GO2RTC_API_ALLOW" > "$allow_conf"
+if [[ -n "${GO2RTC_API_ALLOW:-}" ]]; then
+    for a in $GO2RTC_API_ALLOW; do
+        [[ "$a" =~ ^[0-9A-Fa-f.:]+(/[0-9]+)?$ ]] || die "GO2RTC_API_ALLOW takes IP addresses or CIDR ranges, not '$a'"
+    done
+    echo "Require ip $GO2RTC_API_ALLOW" >> "$allow_conf"
+    log "go2rtc API also open to: $GO2RTC_API_ALLOW"
 fi
 
 shm_kb=$(df -k --output=size /dev/shm | tail -1 | tr -d ' ')
