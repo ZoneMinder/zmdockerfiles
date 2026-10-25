@@ -54,6 +54,7 @@ services:
       PGID: ${PGID:-}
       # The address browsers use, e.g. http://zm.lan:8080. Needed for go2rtc live view (README).
       ZM_PUBLIC_URL: ${ZM_PUBLIC_URL:-}
+      GO2RTC_API_ALLOW: ${GO2RTC_API_ALLOW:-}
       # Outgoing mail. Leave SMTP_HOST empty to skip.
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-}
