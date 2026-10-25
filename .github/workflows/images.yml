@@ -52,7 +52,9 @@ jobs:
       - name: Resolve ZoneMinder version
         run: |
           codename=$(docker run --rm "$BASE_IMAGE" sh -c '. /etc/os-release && echo "$VERSION_CODENAME"')
-          eval "$(release/zoneminder/zm-version.sh "${{ matrix.channel }}" "$codename" amd64)"
+          # The newest version that zmrepo has for both architectures. Each arch's nightly is built
+          # separately, so for a while the newest one may exist for only one of them.
+          eval "$(release/zoneminder/zm-version.sh "${{ matrix.channel }}" "$codename" amd64,arm64)"
           upstream=${ZM_VERSION%%[+~]*}     # 1.38.6+trixie1 -> 1.38.6
           upstream=${upstream%-*}
           minor=${upstream%.*}              # 1.38
@@ -74,9 +76,7 @@ jobs:
           mkdir meta
           {
             echo "channel=$ZM_CHANNEL"
-            # Nightly debs end in a per-arch CI run ID (1.39.41~20261023.190.<run>.1-trixie1),
-            # so every architecture pins everything before it and lets apt match the rest.
-            if [ "${{ matrix.channel }}" = master ]; then echo "pin=${ZM_VERSION%.*.*-*}.*"; else echo "pin=$ZM_VERSION"; fi
+            echo "pin=$ZM_PIN"            # see zm-version.sh
             echo "upstream=$upstream"
             echo "pyzm=$pyzm"
             echo "push=$push"
