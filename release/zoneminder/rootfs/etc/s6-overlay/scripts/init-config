@@ -108,6 +108,8 @@ if [[ ! -f /config/go2rtc.yaml ]]; then
     cat > /config/go2rtc.yaml <<'YAML'
 # go2rtc config. ZoneMinder adds camera streams through the API at runtime.
 # Browsers reach the API through Apache at /zm/go2rtc/, so it only listens inside the container.
+# Apache only lets outside clients open live view streams. Those streams need no login, even
+# with ZoneMinder's authentication on, so keep ZoneMinder's port on a trusted network.
 # Docs: https://github.com/AlexxIT/go2rtc#configuration
 api:
   listen: "127.0.0.1:1984"

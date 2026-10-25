@@ -66,8 +66,11 @@ streams, and its own web page. That means ZoneMinder's own calls must come from 
   view stays blank. Use a hostname.
 - **https behind a reverse proxy:** set `GO2RTC_API_ALLOW` to the proxy's address.
 
-Live view streams themselves still need no login. Anyone who can reach the web port can open a
-monitor's stream if they know its ID, so keep the port on a network you trust.
+**go2rtc live streams are not protected by ZoneMinder's login.** Anyone who can reach the web port
+can watch any monitor with go2rtc enabled, because the browser connects without credentials and
+the IDs are small numbers. Keep the port on a network you trust, or put an authenticating
+reverse proxy or a VPN in front of it. Monitors without go2rtc use ZoneMinder's own streaming,
+which does check the login.
 
 `docker compose ps` shows the container's health. It reports unhealthy when Apache stops serving
 `/zm/`, when the `zmdc.pl` daemon is gone, or when the database doesn't answer.
