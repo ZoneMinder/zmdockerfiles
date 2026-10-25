@@ -1,8 +1,10 @@
 name: images
 
 # For each ZoneMinder channel (newest release, nightly master):
-#   1. run tests/smoke.sh against an amd64 build of the full compose stack
-#   2. if that passes on master, build amd64 + arm64 and push to Docker Hub
+#   prep   resolve the ZoneMinder version and the tags once, so both architectures agree
+#   build  on a native runner per architecture (no QEMU): run tests/smoke.sh against the full
+#          compose stack, then on master push the images by digest
+#   merge  join the per-architecture digests into the multi-arch tags in every repo
 # The daily run picks up new ZoneMinder releases (including a new 1.x channel) and nightlies
 # without anyone editing this repo. It builds without the layer cache, so Debian security
 # updates land within a day. Pushing needs DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets,
@@ -32,10 +34,10 @@ env:
   BASE_IMAGE: debian:stable-slim
 
 jobs:
-  image:
-    name: ${{ matrix.channel }}
+  prep:
+    name: ${{ matrix.channel }} (prep)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -48,10 +50,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Resolve ZoneMinder version
-        id: zm
         run: |
           codename=$(docker run --rm "$BASE_IMAGE" sh -c '. /etc/os-release && echo "$VERSION_CODENAME"')
-          eval "$(release/zoneminder/zm-version.sh "${{ matrix.channel }}" "$codename" amd64)"
+          # The newest version that zmrepo has for both architectures. Each arch's nightly is built
+          # separately, so for a while the newest one may exist for only one of them.
+          eval "$(release/zoneminder/zm-version.sh "${{ matrix.channel }}" "$codename" amd64,arm64)"
           upstream=${ZM_VERSION%%[+~]*}     # 1.38.6+trixie1 -> 1.38.6
           upstream=${upstream%-*}
           minor=${upstream%.*}              # 1.38
@@ -67,111 +70,224 @@ jobs:
           fi
           tags() {  # tags <suffix>: every repo x {channel tag, minor, full version}
             for repo in $REPOS; do
-              for t in "${{ matrix.tag }}" "$minor" "$upstream"; do echo "$repo:$t$1"; done
+              for t in "${{ matrix.tag }}" "$minor" "$upstream"; do printf '%s ' "$repo:$t$1"; done
             done
           }
+          mkdir meta
           {
             echo "channel=$ZM_CHANNEL"
-            echo "version=$ZM_VERSION"
-            # Nightly debs end in a per-arch CI run ID (1.39.41~20261023.190.<run>.1-trixie1),
-            # so the multi-arch build pins everything before it and lets apt match the rest.
-            if [ "${{ matrix.channel }}" = master ]; then echo "pin=${ZM_VERSION%.*.*-*}.*"; else echo "pin=$ZM_VERSION"; fi
+            echo "pin=$ZM_PIN"            # see zm-version.sh
             echo "upstream=$upstream"
             echo "pyzm=$pyzm"
             echo "push=$push"
-            echo "zm_tags<<EOF"; tags ""; echo "EOF"
-            echo "es_tags<<EOF"; tags "-es"; echo "EOF"
-            echo "pyzm_tags<<EOF"; echo "$PYZM_REPO:latest"; echo "$PYZM_REPO:$pyzm"; echo "EOF"
-          } | tee -a "$GITHUB_OUTPUT"
+            echo "zm_repo=${REPOS%% *}"
+            echo "pyzm_repo=$PYZM_REPO"
+            echo "zm_tags=$(tags "")"
+            echo "es_tags=$(tags "-es")"
+            echo "pyzm_tags=$PYZM_REPO:latest $PYZM_REPO:$pyzm"
+          } | tee meta/meta.env
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meta-${{ matrix.channel }}
+          path: meta/meta.env
+          retention-days: 1
+
+  build:
+    name: ${{ matrix.channel }} (${{ matrix.arch }})
+    needs: prep
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [release, master]
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: meta-${{ matrix.channel }}
+          path: meta
+
+      - name: Load metadata
+        id: meta
+        run: tee -a "$GITHUB_OUTPUT" < meta/meta.env
 
       - name: Smoke test
         env:
-          ZM_CHANNEL: ${{ steps.zm.outputs.channel }}
-          ZM_VERSION: ${{ steps.zm.outputs.version }}
+          ZM_CHANNEL: ${{ steps.meta.outputs.channel }}
+          ZM_VERSION: ${{ steps.meta.outputs.pin }}
         run: tests/smoke.sh
 
-      - uses: docker/setup-qemu-action@v3
-        if: steps.zm.outputs.push == 'true'
       - uses: docker/setup-buildx-action@v3
-        if: steps.zm.outputs.push == 'true'
+        if: steps.meta.outputs.push == 'true'
       - uses: docker/login-action@v3
-        if: steps.zm.outputs.push == 'true'
+        if: steps.meta.outputs.push == 'true'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Each image is pushed untagged, by digest. The merge job tags the multi-arch index.
       - name: Push zm
-        if: steps.zm.outputs.push == 'true'
+        id: zm
+        if: steps.meta.outputs.push == 'true'
         uses: docker/build-push-action@v6
         with:
           context: release/zoneminder
           target: zm
-          platforms: linux/amd64,linux/arm64
-          push: true
+          platforms: linux/${{ matrix.arch }}
           pull: true
           # The daily run rebuilds every layer so Debian package updates reach the image.
           # The cache would otherwise replay yesterday's apt-get layers.
           no-cache: ${{ github.event_name == 'schedule' }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
-            ZM_CHANNEL=${{ steps.zm.outputs.channel }}
-            ZM_VERSION=${{ steps.zm.outputs.pin }}
+            ZM_CHANNEL=${{ steps.meta.outputs.channel }}
+            ZM_VERSION=${{ steps.meta.outputs.pin }}
           labels: |
             org.opencontainers.image.title=ZoneMinder
             org.opencontainers.image.description=ZoneMinder video surveillance on Debian
-            org.opencontainers.image.version=${{ steps.zm.outputs.upstream }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.upstream }}
             org.opencontainers.image.url=https://zoneminder.com
             org.opencontainers.image.documentation=https://zoneminder.readthedocs.io
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.licenses=GPL-2.0-or-later
-          tags: ${{ steps.zm.outputs.zm_tags }}
-          cache-from: type=gha,scope=${{ matrix.channel }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
+          tags: ${{ steps.meta.outputs.zm_repo }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.channel }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.channel }}-${{ matrix.arch }}
 
       - name: Push zm-es
-        if: steps.zm.outputs.push == 'true'
+        id: es
+        if: steps.meta.outputs.push == 'true'
         uses: docker/build-push-action@v6
         with:
           context: release/zoneminder
           target: zm-es
-          platforms: linux/amd64,linux/arm64
-          push: true
+          platforms: linux/${{ matrix.arch }}
           pull: true
           # Reuse the zm layers the step above just rebuilt; rebuild only the zm-es stage.
           no-cache-filters: ${{ github.event_name == 'schedule' && 'zm-es' || '' }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
-            ZM_CHANNEL=${{ steps.zm.outputs.channel }}
-            ZM_VERSION=${{ steps.zm.outputs.pin }}
+            ZM_CHANNEL=${{ steps.meta.outputs.channel }}
+            ZM_VERSION=${{ steps.meta.outputs.pin }}
           labels: |
             org.opencontainers.image.title=ZoneMinder with event server
             org.opencontainers.image.description=ZoneMinder video surveillance on Debian, with zmeventnotificationNg
-            org.opencontainers.image.version=${{ steps.zm.outputs.upstream }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.upstream }}
             org.opencontainers.image.url=https://zoneminder.com
             org.opencontainers.image.documentation=https://zoneminder.readthedocs.io
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.licenses=GPL-2.0-or-later
-          tags: ${{ steps.zm.outputs.es_tags }}
-          cache-from: type=gha,scope=${{ matrix.channel }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.channel }}
+          tags: ${{ steps.meta.outputs.zm_repo }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.channel }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.channel }}-${{ matrix.arch }}
 
       - name: Push pyzm-serve
-        if: steps.zm.outputs.push == 'true' && matrix.channel == 'release'
+        id: pyzm
+        if: steps.meta.outputs.push == 'true' && matrix.channel == 'release'
         uses: docker/build-push-action@v6
         with:
           context: release/pyzm-serve
-          platforms: linux/amd64,linux/arm64
-          push: true
+          platforms: linux/${{ matrix.arch }}
           pull: true
           no-cache: ${{ github.event_name == 'schedule' }}
           labels: |
             org.opencontainers.image.title=pyzm-serve
             org.opencontainers.image.description=Object detection server for the ZoneMinder event server
-            org.opencontainers.image.version=${{ steps.zm.outputs.pyzm }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.pyzm }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-          tags: ${{ steps.zm.outputs.pyzm_tags }}
-          cache-from: type=gha,scope=pyzm-serve
-          cache-to: type=gha,mode=max,scope=pyzm-serve
+          tags: ${{ steps.meta.outputs.pyzm_repo }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=pyzm-serve-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=pyzm-serve-${{ matrix.arch }}
+
+      - name: Save digests
+        if: steps.meta.outputs.push == 'true'
+        run: |
+          mkdir digests
+          echo "${{ steps.zm.outputs.digest }}" > digests/zm
+          echo "${{ steps.es.outputs.digest }}" > digests/zm-es
+          if [ -n "${{ steps.pyzm.outputs.digest }}" ]; then echo "${{ steps.pyzm.outputs.digest }}" > digests/pyzm; fi
+          head digests/*
+
+      - uses: actions/upload-artifact@v4
+        if: steps.meta.outputs.push == 'true'
+        with:
+          name: digests-${{ matrix.channel }}-${{ matrix.arch }}
+          path: digests/
+          retention-days: 1
+
+  merge:
+    name: ${{ matrix.channel }} (merge)
+    needs: [prep, build]
+    # A failed nightly build mustn't hold back the release tags, so run even when another
+    # channel's build failed. A channel missing a digest fails its own merge below.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [release, master]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: meta-${{ matrix.channel }}
+          path: meta
+
+      - name: Load metadata
+        id: meta
+        run: tee -a "$GITHUB_OUTPUT" < meta/meta.env
+
+      - uses: actions/download-artifact@v4
+        if: steps.meta.outputs.push == 'true'
+        with:
+          pattern: digests-${{ matrix.channel }}-*
+          path: digests
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.meta.outputs.push == 'true'
+      - uses: docker/login-action@v3
+        if: steps.meta.outputs.push == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag multi-arch images
+        if: steps.meta.outputs.push == 'true'
+        env:
+          CHANNEL: ${{ matrix.channel }}
+          ZM_REPO: ${{ steps.meta.outputs.zm_repo }}
+          PYZM_REPO: ${{ steps.meta.outputs.pyzm_repo }}
+          ZM_TAGS: ${{ steps.meta.outputs.zm_tags }}
+          ES_TAGS: ${{ steps.meta.outputs.es_tags }}
+          PYZM_TAGS: ${{ steps.meta.outputs.pyzm_tags }}
+        run: |
+          # merge <image> <repo> <tags>: one index from both architectures' digests, under every tag
+          merge() {
+            local sources=() tags=() arch f
+            for arch in amd64 arm64; do
+              f="digests/digests-$CHANNEL-$arch/$1"
+              [ -s "$f" ] || { echo "::error::no $arch digest for $1 ($CHANNEL)"; return 1; }
+              sources+=("$2@$(cat "$f")")
+            done
+            for t in $3; do tags+=(-t "$t"); done
+            docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+            docker buildx imagetools inspect "${3%% *}"
+          }
+          merge zm "$ZM_REPO" "$ZM_TAGS"
+          merge zm-es "$ZM_REPO" "$ES_TAGS"
+          if [ "$CHANNEL" = release ]; then merge pyzm "$PYZM_REPO" "$PYZM_TAGS"; fi
