@@ -4,7 +4,7 @@ name: pyzm-serve-cuda
 # it from master. The OpenCV compile takes about 25 minutes the first time. After that the
 # GitHub Actions cache holds it, and only a change to the Dockerfile ARGs or a new CUDA base
 # image rebuilds it. GitHub drops caches unused for 7 days, so the schedule runs twice a week
-# to keep it, and to pick up base image updates.
+# to keep it, and to pick up base image and Ubuntu package updates.
 #
 # GitHub's runners have no GPU, so this proves OpenCV has CUDA and cuDNN and that detection
 # works on the CPU. It can't prove GPU inference works.
@@ -70,6 +70,9 @@ jobs:
           platforms: linux/amd64
           pull: true
           load: true
+          # Scheduled runs rebuild the runtime stage so Ubuntu package updates reach the image.
+          # The OpenCV compile stage stays cached.
+          no-cache-filters: ${{ github.event_name == 'schedule' && 'runtime' || '' }}
           build-args: BUILD_JOBS=4
           labels: |
             org.opencontainers.image.title=pyzm-serve (CUDA)
