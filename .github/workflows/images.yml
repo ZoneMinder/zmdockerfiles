@@ -4,7 +4,8 @@ name: images
 #   1. run tests/smoke.sh against an amd64 build of the full compose stack
 #   2. if that passes on master, build amd64 + arm64 and push to Docker Hub
 # The daily run picks up new ZoneMinder releases (including a new 1.x channel) and nightlies
-# without anyone editing this repo. Pushing needs DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets,
+# without anyone editing this repo. It builds without the layer cache, so Debian security
+# updates land within a day. Pushing needs DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets,
 # with a token that can write to both the zoneminder and zoneminderhq organisations.
 #
 # Images: zoneminder/zoneminder (mirrored to zoneminderhq/zoneminder, the name the old images used)
@@ -107,6 +108,10 @@ jobs:
           target: zm
           platforms: linux/amd64,linux/arm64
           push: true
+          pull: true
+          # The daily run rebuilds every layer so Debian package updates reach the image.
+          # The cache would otherwise replay yesterday's apt-get layers.
+          no-cache: ${{ github.event_name == 'schedule' }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             ZM_CHANNEL=${{ steps.zm.outputs.channel }}
@@ -132,6 +137,9 @@ jobs:
           target: zm-es
           platforms: linux/amd64,linux/arm64
           push: true
+          pull: true
+          # Reuse the zm layers the step above just rebuilt; rebuild only the zm-es stage.
+          no-cache-filters: ${{ github.event_name == 'schedule' && 'zm-es' || '' }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             ZM_CHANNEL=${{ steps.zm.outputs.channel }}
@@ -156,6 +164,8 @@ jobs:
           context: release/pyzm-serve
           platforms: linux/amd64,linux/arm64
           push: true
+          pull: true
+          no-cache: ${{ github.event_name == 'schedule' }}
           labels: |
             org.opencontainers.image.title=pyzm-serve
             org.opencontainers.image.description=Object detection server for the ZoneMinder event server

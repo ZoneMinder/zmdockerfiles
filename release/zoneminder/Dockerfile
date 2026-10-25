@@ -30,6 +30,14 @@ ARG ZM_CHANNEL=release
 ARG ZM_VERSION=
 ARG S6_OVERLAY_VERSION=3.2.3.2
 ARG GO2RTC_VERSION=1.9.14
+# sha256 of each download. Update these with the version. s6-overlay publishes a .sha256 next to
+# each tarball. For go2rtc, GitHub lists a digest per asset:
+#   gh api repos/AlexxIT/go2rtc/releases/tags/v<version> -q '.assets[]|.name+" "+.digest'
+ARG S6_OVERLAY_SHA256_NOARCH=5379750ed30a84bbd2e2dd74847ba6b5bd29cd0b2e3ea2ec58049b57eb2eda12
+ARG S6_OVERLAY_SHA256_X86_64=e6befcc96a437a3831386ecfc51808c5d3e939dc5fe3c02ae9284599e8aa2408
+ARG S6_OVERLAY_SHA256_AARCH64=b17f17a82e7a515c682a91edaf2ffdabb73f891981b6c1fd712115693a2f8b4c
+ARG GO2RTC_SHA256_AMD64=32d616af226bd731678ffde328b94cfb94e30339bfefc469cfb76323144615a6
+ARG GO2RTC_SHA256_ARM64=359fabade8a7a51e81a55fe6df6b0ef81764a5e1d63179577534eaaa71904b50
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC \
@@ -49,18 +57,28 @@ RUN apt-get update \
 
 # s6-overlay
 RUN case "${TARGETARCH}" in \
-        amd64) s6_arch=x86_64 ;; \
-        arm64) s6_arch=aarch64 ;; \
+        amd64) s6_arch=x86_64; s6_sha="${S6_OVERLAY_SHA256_X86_64}" ;; \
+        arm64) s6_arch=aarch64; s6_sha="${S6_OVERLAY_SHA256_AARCH64}" ;; \
         *) echo "unsupported arch ${TARGETARCH}" >&2; exit 1 ;; \
     esac \
+    && cd /tmp \
     && for f in noarch "${s6_arch}"; do \
-        curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${f}.tar.xz" \
-            | tar -C / -Jxp; \
-    done
+        curl -fsSLO "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${f}.tar.xz"; \
+    done \
+    && printf '%s  %s\n' "${S6_OVERLAY_SHA256_NOARCH}" s6-overlay-noarch.tar.xz \
+        "${s6_sha}" "s6-overlay-${s6_arch}.tar.xz" | sha256sum -c \
+    && for f in noarch "${s6_arch}"; do tar -C / -Jxpf "s6-overlay-${f}.tar.xz"; done \
+    && rm -f /tmp/s6-overlay-*.tar.xz
 
 # go2rtc (ZM 1.38 uses it for WebRTC/MSE live view)
-RUN curl -fsSL -o /usr/local/bin/go2rtc \
+RUN case "${TARGETARCH}" in \
+        amd64) sha="${GO2RTC_SHA256_AMD64}" ;; \
+        arm64) sha="${GO2RTC_SHA256_ARM64}" ;; \
+        *) echo "unsupported arch ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL -o /usr/local/bin/go2rtc \
         "https://github.com/AlexxIT/go2rtc/releases/download/v${GO2RTC_VERSION}/go2rtc_linux_${TARGETARCH}" \
+    && sha256sum -c <<< "${sha}  /usr/local/bin/go2rtc" \
     && chmod 755 /usr/local/bin/go2rtc
 
 # ZoneMinder, Apache + mod_php, DB client, VA-API drivers, mail

@@ -18,10 +18,16 @@ FROM nvidia/cuda:${CUDA_IMAGE_VERSION}-cudnn-devel-${UBUNTU} AS opencv
 
 ARG PYZM_VERSION=2.5.4
 ARG OPENCV_VERSION=4.14.0
+# sha256 of the GitHub source tarballs for OPENCV_VERSION. Update them with the version:
+#   curl -fsSL https://github.com/opencv/opencv/archive/refs/tags/<version>.tar.gz | sha256sum
+ARG OPENCV_SHA256=ee8fb9b30eb60850431b4656447080e3737b56e45719c92b67f245950609f86e
+ARG OPENCV_CONTRIB_SHA256=4f17abd1bc7f88e19c3380c8de7cbf2d863aced5b5ee8d8934cc7902b67d42c9
 ARG CUDA_ARCH_BIN="7.5;8.0;8.6;8.9;9.0;10.0;12.0"
 ARG CUDA_ARCH_PTX="12.0"
 # nvcc uses a lot of memory per job. Lower this if the build gets killed.
 ARG BUILD_JOBS=8
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -34,8 +40,10 @@ RUN python3 -m venv /opt/venv \
 
 # The DNN CUDA backend needs the cudev module from opencv_contrib.
 RUN mkdir /src && cd /src \
-    && curl -fsSL "https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz" | tar xz \
-    && curl -fsSL "https://github.com/opencv/opencv_contrib/archive/refs/tags/${OPENCV_VERSION}.tar.gz" | tar xz \
+    && curl -fsSL -o opencv.tar.gz "https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz" \
+    && curl -fsSL -o opencv_contrib.tar.gz "https://github.com/opencv/opencv_contrib/archive/refs/tags/${OPENCV_VERSION}.tar.gz" \
+    && printf '%s  %s\n' "${OPENCV_SHA256}" opencv.tar.gz "${OPENCV_CONTRIB_SHA256}" opencv_contrib.tar.gz | sha256sum -c \
+    && tar xzf opencv.tar.gz && tar xzf opencv_contrib.tar.gz \
     && cmake -S "opencv-${OPENCV_VERSION}" -B build \
         -D CMAKE_BUILD_TYPE=Release \
         -D CMAKE_INSTALL_PREFIX=/opt/opencv \
@@ -62,7 +70,7 @@ RUN echo /opt/opencv/lib > /etc/ld.so.conf.d/opencv.conf && ldconfig \
         assert re.search(r'cuDNN:\s+YES', info), 'no cuDNN'; \
         print('OpenCV', cv2.__version__, 'with CUDA and cuDNN')"
 
-FROM nvidia/cuda:${CUDA_IMAGE_VERSION}-cudnn-runtime-${UBUNTU}
+FROM nvidia/cuda:${CUDA_IMAGE_VERSION}-cudnn-runtime-${UBUNTU} AS runtime
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl python3 \
