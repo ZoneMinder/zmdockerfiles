@@ -18,6 +18,10 @@ Docker images and a compose stack for running ZoneMinder, with an optional event
 All images are on Docker Hub for amd64 and arm64. `zoneminderhq/zoneminder` carries the same tags
 as `zoneminder/zoneminder`, so anyone still pulling the old name gets current images.
 
+The same tags are on GitHub's registry, `ghcr.io/zoneminder/zoneminder` and
+`ghcr.io/zoneminder/pyzm-serve`, which has no Docker Hub pull limits. To use it with compose, set
+`ZM_IMAGE=ghcr.io/zoneminder/zoneminder` and `PYZM_IMAGE=ghcr.io/zoneminder/pyzm-serve` in `.env`.
+
 | Image | Tags |
 |---|---|
 | `zoneminder/zoneminder` | `latest`, `1.38`, `1.38.6`: newest release. `dev`, `1.39`, ...: nightly development build. |

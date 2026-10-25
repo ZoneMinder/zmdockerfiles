@@ -1,7 +1,7 @@
 name: pyzm-serve-cuda
 
 # Builds zoneminder/pyzm-serve:cuda (amd64 only), tests it with tests/pyzm-cuda.sh, and pushes
-# it from master. The OpenCV compile takes about 25 minutes the first time. After that the
+# it from master, to Docker Hub and to ghcr.io/zoneminder/pyzm-serve. The OpenCV compile takes about 25 minutes the first time. After that the
 # GitHub Actions cache holds it, and only a change to the Dockerfile ARGs or a new CUDA base
 # image rebuilds it. GitHub drops caches unused for 7 days, so the schedule runs twice a week
 # to keep it, and to pick up base image and Ubuntu package updates.
@@ -25,13 +25,16 @@ on:
         default: false
 
 env:
-  PYZM_REPO: zoneminder/pyzm-serve
+  PYZM_REPOS: zoneminder/pyzm-serve ghcr.io/zoneminder/pyzm-serve
   TEST_IMAGE: pyzm-serve:cuda-test
 
 jobs:
   cuda:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: write   # push to ghcr.io
     steps:
       - uses: actions/checkout@v4
 
@@ -46,8 +49,7 @@ jobs:
         run: |
           pyzm=$(sed -n 's/^ARG PYZM_VERSION=//p' release/pyzm-serve/Dockerfile.cuda)
           if [ "${{ inputs.test_push }}" = true ]; then
-            REPOS=$(for r in $REPOS; do printf '%s-test ' "$r"; done)
-            PYZM_REPO="$PYZM_REPO-test"
+            PYZM_REPOS=$(for r in $PYZM_REPOS; do printf '%s-test ' "$r"; done)
           fi
           push=false
           if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
@@ -57,7 +59,7 @@ jobs:
           {
             echo "push=$push"
             echo "pyzm=$pyzm"
-            echo "tags=$PYZM_REPO:cuda $PYZM_REPO:$pyzm-cuda"
+            echo "tags=$(for r in $PYZM_REPOS; do printf '%s ' "$r:cuda" "$r:$pyzm-cuda"; done)"
           } | tee -a "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
@@ -92,6 +94,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/login-action@v3
+        if: steps.meta.outputs.push == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push
         if: steps.meta.outputs.push == 'true'

@@ -21,4 +21,6 @@ On first start it downloads `yolo11s` into the `/models` volume and serves it as
 | `latest`, `2.5.4` | CPU, amd64 and arm64 |
 | `cuda`, `2.5.4-cuda` | NVIDIA GPU, amd64 only, about 3 GB. Turing (GTX 16xx, RTX 20xx) and newer. |
 
+The same tags are on GitHub's registry as `ghcr.io/zoneminder/pyzm-serve`.
+
 The `cuda` tag needs the NVIDIA driver and the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host. Add `compose.gpu.yaml` from the repo to run it. If the container can't see a GPU it exits with a message. Set `PYZM_PROCESSOR=cpu` to run it on the CPU anyway.
