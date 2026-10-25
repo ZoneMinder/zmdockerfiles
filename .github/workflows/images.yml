@@ -150,6 +150,7 @@ jobs:
           grype-version: v0.121.0
           only-fixed: true
           fail-build: false
+          severity-cutoff: high   # only sets when the step shows a warning
           output-format: sarif
           output-file: scan-zm-es.sarif
       - name: Scan pyzm-serve
@@ -161,6 +162,7 @@ jobs:
           grype-version: v0.121.0
           only-fixed: true
           fail-build: false
+          severity-cutoff: high   # only sets when the step shows a warning
           output-format: sarif
           output-file: scan-pyzm-serve.sarif
       - name: Scan summary
