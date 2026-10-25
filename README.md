@@ -269,8 +269,10 @@ tests/smoke.sh                       # newest release
 ZM_CHANNEL=master tests/smoke.sh     # nightly
 ```
 
-The `images` workflow runs it for both channels on every pull request, on every push to master and
-once a day. On master it then builds amd64 and arm64 and pushes to Docker Hub.
+The `images` workflow runs it for both channels and both architectures on every pull request, on
+every push to master and once a day. Each architecture runs on its own native GitHub runner, with no
+emulation. On master each one then pushes its images, and a last job joins them into the
+multi-arch tags on Docker Hub.
 
 The `pyzm-serve-cuda` workflow builds the CUDA image when `release/pyzm-serve` changes and twice a
 week, runs `tests/pyzm-cuda.sh`, and pushes from master. The first build compiles OpenCV for seven
