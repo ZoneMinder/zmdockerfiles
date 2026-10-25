@@ -230,6 +230,33 @@ docker compose up -d
 live in the same place (`/var/cache/zoneminder/events`), so point the `events` volume at the old
 directory, or bind mount it.
 
+## Verifying images
+
+CI signs every published image with [cosign](https://docs.sigstore.dev/), using GitHub's OIDC
+identity, so there is no key to distribute. To check that an image came from this repo's master
+branch:
+
+```bash
+cosign verify zoneminder/zoneminder:latest \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github\.com/ZoneMinder/zmdockerfiles/\.github/workflows/(images|pyzm-cuda)\.yml@refs/heads/master$'
+```
+
+The same works for `zoneminderhq/zoneminder`, `zoneminder/pyzm-serve` and the `ghcr.io` names.
+
+Each image also carries an SBOM, a list of every package inside it with versions, and a record of
+how it was built: the commit, workflow and build arguments. Read them without pulling the image:
+
+```bash
+docker buildx imagetools inspect zoneminder/zoneminder:latest --format '{{json .SBOM}}'
+docker buildx imagetools inspect zoneminder/zoneminder:latest --format '{{json .Provenance}}'
+```
+
+CI scans the images with [Grype](https://github.com/anchore/grype) on every build. Results for
+master are in the repo's Security tab, and each run's summary lists fixable findings scoring 7.0
+or more. Findings don't block publishing: an image held back for one CVE would also hold back the
+Debian security fixes in the same rebuild.
+
 ## Building
 
 ```bash

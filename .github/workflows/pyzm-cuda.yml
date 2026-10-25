@@ -35,6 +35,7 @@ jobs:
     permissions:
       contents: read
       packages: write   # push to ghcr.io
+      id-token: write   # cosign keyless signing
     steps:
       - uses: actions/checkout@v4
 
@@ -59,7 +60,7 @@ jobs:
           {
             echo "push=$push"
             echo "pyzm=$pyzm"
-            echo "tags=$(for r in $PYZM_REPOS; do printf '%s ' "$r:cuda" "$r:$pyzm-cuda"; done)"
+            echo "tags=$(for r in $PYZM_REPOS; do printf '%s,' "$r:cuda" "$r:$pyzm-cuda"; done)"
           } | tee -a "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
@@ -101,10 +102,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Same inputs as Build, so every layer comes from the cache and the pushed image is the one
+      # just tested. This step adds the SBOM and provenance attestations, which a docker push of
+      # the loaded image can't carry.
       - name: Push
+        id: push
         if: steps.meta.outputs.push == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: release/pyzm-serve
+          file: release/pyzm-serve/Dockerfile.cuda
+          platforms: linux/amd64
+          push: true
+          sbom: true
+          provenance: mode=max
+          build-args: BUILD_JOBS=4
+          labels: |
+            org.opencontainers.image.title=pyzm-serve (CUDA)
+            org.opencontainers.image.description=Object detection server for the ZoneMinder event server, on NVIDIA GPUs
+            org.opencontainers.image.version=${{ steps.meta.outputs.pyzm }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=pyzm-cuda
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        if: steps.meta.outputs.push == 'true'
+        with:
+          cosign-release: v3.1.4
+      - name: Sign
+        if: steps.meta.outputs.push == 'true'
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.push.outputs.digest }}
         run: |
-          for tag in ${{ steps.meta.outputs.tags }}; do
-            docker tag "$TEST_IMAGE" "$tag"
-            docker push "$tag"
+          for repo in $(echo "$TAGS" | tr , '\n' | sed '/^$/d; s/:[^:]*$//' | sort -u); do
+            cosign sign --yes "$repo@$DIGEST"
           done
